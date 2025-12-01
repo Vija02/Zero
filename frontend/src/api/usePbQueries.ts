@@ -24,7 +24,7 @@ export function usePbOne<T extends keyof CollectionResponses>(
 	const collection = usePbCollection(collectionId)
 
 	return useQuery({
-		queryKey: [collectionId, id, options],
+		queryKey: [collectionId, "one", id, options],
 		queryFn: async () => await collection.getOne(id, options),
 	}) as UseQueryResult<CollectionResponses[T], Error>
 }
@@ -46,7 +46,7 @@ export function usePbList<T extends keyof CollectionResponses>(
 	const collection = usePbCollection(collectionId)
 
 	return useQuery({
-		queryKey: [collectionId, props],
+		queryKey: [collectionId, "list", props],
 		queryFn: async () => {
 			const { page, perPage, ...options } = props
 			return await collection.getList(page, perPage, options)
@@ -70,7 +70,7 @@ export function usePbFirst<T extends keyof CollectionResponses>(
 	const collection = usePbCollection(collectionId)
 
 	return useQuery({
-		queryKey: [collectionId, filter, options],
+		queryKey: [collectionId, "first", filter, options],
 		queryFn: async () => await collection.getFirstListItem(filter, options),
 	}) as UseQueryResult<CollectionResponses[T], Error>
 }
@@ -89,7 +89,7 @@ export function usePbFullList<T extends keyof CollectionResponses>(
 	const collection = usePbCollection(collectionId)
 
 	return useQuery({
-		queryKey: [collectionId, options],
+		queryKey: [collectionId, "fullList", options],
 		queryFn: async () => await collection.getFullList(options),
 	}) as UseQueryResult<CollectionResponses[T][], Error>
 }
