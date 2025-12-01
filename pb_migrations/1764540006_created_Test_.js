@@ -52,12 +52,21 @@ migrate(
 				},
 				{
 					hidden: false,
+					id: "bool989355118",
+					name: "completed",
+					presentable: false,
+					required: false,
+					system: false,
+					type: "bool",
+				},
+				{
+					hidden: false,
 					id: "date2566134982",
 					max: "",
 					min: "",
 					name: "allocated_date",
 					presentable: false,
-					required: false,
+					required: true,
 					system: false,
 					type: "date",
 				},
@@ -93,7 +102,10 @@ migrate(
 					type: "autodate",
 				},
 			],
-			indexes: ["CREATE INDEX `idx_UWolL3pxbS` ON `tasks` (`allocated_date`)"],
+			indexes: [
+				"CREATE INDEX `idx_UWolL3pxbS` ON `tasks` (`allocated_date`)",
+				"CREATE INDEX `idx_UgOE0d0hrA` ON `tasks` (`completed`)",
+			],
 			system: false,
 		})
 
