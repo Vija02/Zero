@@ -1,15 +1,15 @@
-import { useState, FormEvent } from "react"
+import { usePocketBase } from "@/api/usePocketBase"
+import { FormEvent, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { useAuthStore } from "../store/authStore"
-import { pb } from "../api"
 
 export function LoginPage() {
 	const [email, setEmail] = useState("")
 	const [password, setPassword] = useState("")
 	const [error, setError] = useState("")
 	const [isLoading, setIsLoading] = useState(false)
-	const login = useAuthStore((state) => state.login)
 	const navigate = useNavigate()
+
+	const pb = usePocketBase()
 
 	const handleSubmit = async (e: FormEvent) => {
 		e.preventDefault()
@@ -17,11 +17,8 @@ export function LoginPage() {
 		setIsLoading(true)
 
 		try {
-			const authData = await pb
-				.collection("_superusers")
-				.authWithPassword(email, password)
+			await pb.collection("_superusers").authWithPassword(email, password)
 
-			login(authData.token)
 			navigate("/dashboard")
 		} catch (err) {
 			setError("Invalid email or password")

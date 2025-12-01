@@ -1,17 +1,16 @@
 "use client"
 
+import { usePocketBase } from "@/api/usePocketBase"
 import {
-	Home,
-	ListTodo,
-	Target,
 	Archive,
 	ChevronDown,
-	X,
+	Home,
+	ListTodo,
 	LogOut,
+	Target,
+	X,
 } from "lucide-react"
 import { useTaskManager } from "./task-manager"
-import { useAuthStore } from "@/store/authStore"
-import { useNavigate } from "react-router-dom"
 
 const mainNavItems = [
 	{ icon: Home, label: "Home", active: true },
@@ -23,12 +22,10 @@ export function LeftSidebar() {
 	const { showBacklog, toggleBacklog, sidebarOpen, toggleSidebar } =
 		useTaskManager()
 
-	const logout = useAuthStore((state) => state.logout)
-	const navigate = useNavigate()
+	const pb = usePocketBase()
 
 	const handleLogout = () => {
-		logout()
-		navigate("/login")
+		pb.authStore.clear()
 	}
 
 	return (

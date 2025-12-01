@@ -1,10 +1,10 @@
 import { Navigate, Outlet } from "react-router-dom"
-import { useAuthStore } from "../store/authStore"
+import { usePbAuthStore } from "use-pocketbase"
 
 export function ProtectedRoute() {
-	const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+	const { isValid } = usePbAuthStore()
 
-	if (!isAuthenticated) {
+	if (!isValid) {
 		return <Navigate to="/login" replace />
 	}
 
