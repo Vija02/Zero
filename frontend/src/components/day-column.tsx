@@ -237,9 +237,9 @@ function TaskCardWrapper({ task, day, index, incompleteTasks }: TaskCardWrapperP
 	})
 
 	return (
-		<div ref={dropRef}>
+		<div ref={dropRef} className="relative">
 			{isOver && canShowIndicator && (
-				<div className="h-1 bg-[#6366f1] rounded-full mb-1.5" />
+				<div className="absolute -top-[5px] left-0 right-0 h-1 bg-[#6366f1] rounded-full z-10" />
 			)}
 			<TaskCard task={task} day={day} index={index} />
 		</div>
