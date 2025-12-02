@@ -9,6 +9,7 @@ services:
     volumes:
       - ./pb_data:/pb_data
       - ./pb_migrations:/pb_migrations
+      - ./pb_hooks:/pb_hooks
       - ./frontend/dist:/pb_public
     healthcheck:
       test:

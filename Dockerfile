@@ -26,8 +26,7 @@ COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 COPY --from=frontend_builder /dist /pb_public
-# COPY ./pb_migrations /pb_migrations
-# COPY ./pb_hooks /pb_hooks
-# COPY ./pb_public /pb_public
+COPY ./pb_migrations /pb_migrations
+COPY ./pb_hooks /pb_hooks
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
