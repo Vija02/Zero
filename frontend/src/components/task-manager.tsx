@@ -82,9 +82,6 @@ export function TaskManager() {
 	const [elapsedTime, setElapsedTime] = useState(0)
 	const timerRef = useRef<NodeJS.Timeout | null>(null)
 
-	const { data } = usePbList("tasks")
-	console.log(data)
-
 	useEffect(() => {
 		const checkMobile = () => setIsMobile(window.innerWidth < 768)
 		checkMobile()

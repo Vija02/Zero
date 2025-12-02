@@ -37,6 +37,10 @@ export function WeeklyView() {
 		[selectedDate, visibleCount],
 	)
 
+	const setToToday = useCallback(() => {
+		setSelectedDate(startOfDay(new Date()))
+	}, [])
+
 	const goBack = useCallback(() => {
 		setSelectedDate((prev) => addDays(prev, -1))
 	}, [])
@@ -57,17 +61,20 @@ export function WeeklyView() {
 					</button>
 					<button
 						onClick={goBack}
-						className="flex items-center justify-center p-1.5 hover:bg-[#252525] rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+						className="flex items-center justify-center p-1.5 cursor-pointer hover:bg-[#252525] rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
 					>
 						<ChevronLeft className="w-4 h-4" />
 					</button>
-					<button className="flex items-center gap-1.5 px-2.5 py-1 bg-[#252525] hover:bg-[#333] rounded text-sm text-[#e6e6e6] transition-colors">
+					<button
+						onClick={setToToday}
+						className="flex items-center gap-1.5 px-2.5 py-1 cursor-pointer bg-[#252525] hover:bg-[#333] rounded text-sm text-[#e6e6e6] transition-colors"
+					>
 						<CalendarDays className="w-3.5 h-3.5" />
 						<span className="hidden sm:inline">Today</span>
 					</button>
 					<button
 						onClick={goForward}
-						className="flex items-center justify-center p-1.5 hover:bg-[#252525] rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+						className="flex items-center justify-center p-1.5 cursor-pointer hover:bg-[#252525] rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
 					>
 						<ChevronRight className="w-4 h-4" />
 					</button>

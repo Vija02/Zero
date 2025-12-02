@@ -1,52 +1,75 @@
-import {
-	X,
-	Maximize2,
-	MoreHorizontal,
-	Circle,
-	CheckCircle2,
-	Play,
-	Square,
-	Paperclip,
-	Calendar,
-	ChevronLeft,
-	ChevronRight,
-	Trash2,
-} from "lucide-react"
-import { useTaskManager, type Task } from "./task-manager"
 import { usePbOne } from "@/api/usePbQueries"
-import { format } from "date-fns"
-import { usePbMutations } from "use-pocketbase"
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import useHotkeys from "@reecelucas/react-use-hotkeys"
+import { format } from "date-fns"
+import {
+	Calendar,
+	CheckCircle2,
+	Circle,
+	MoreHorizontal,
+	Trash2,
+	X,
+} from "lucide-react"
+import { useEffect, useState } from "react"
+import { usePbMutations } from "use-pocketbase"
 
 interface TaskDetailModalProps {
 	taskId: string
 	onClose: () => void
 }
 
-const tagColors: Record<string, string> = {
-	Church: "#6366f1",
-	Personal: "#22c55e",
-	Chores: "#eab308",
-}
-
 export function TaskDetailModal({ taskId, onClose }: TaskDetailModalProps) {
-	const { toggleTaskComplete, activeTask, startTask, stopTask, elapsedTime } =
-		useTaskManager()
-
 	const { data: task, isLoading } = usePbOne("tasks", taskId)
-
-	// const tagColor = tagColors[task.tag] || "#666"
+	const [title, setTitle] = useState("")
+	const [description, setDescription] = useState("")
 
 	// const isActive = activeTask?.task.id === task.id
 	const {
 		update: { mutate: updateTask },
 		deleteRecord: { mutate: deleteTask },
 	} = usePbMutations("tasks")
+
+	// Initialize title and description when task is loaded
+	useEffect(() => {
+		if (task) {
+			setTitle(task.title)
+			setDescription(task.description || "")
+		}
+	}, [task])
+
+	const handleTitleBlur = () => {
+		if (task && title !== task.title) {
+			updateTask({ id: task.id, title })
+		}
+	}
+
+	const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+		if (e.key === "Enter") {
+			e.currentTarget.blur()
+		}
+	}
+
+	const handleDescriptionBlur = () => {
+		if (task && description !== (task.description || "")) {
+			console.log("Updating description to:", description)
+			updateTask({ id: task.id, description })
+		}
+	}
+
+	const handleDescriptionKeyDown = (
+		e: React.KeyboardEvent<HTMLTextAreaElement>,
+	) => {
+		if (e.key === "Escape") {
+			e.currentTarget.blur()
+		}
+	}
 
 	const handleDelete = () => {
 		if (task) {
@@ -61,9 +84,10 @@ export function TaskDetailModal({ taskId, onClose }: TaskDetailModalProps) {
 			updateTask({ id: task.id, completed: !task.completed })
 		}
 	}
-	// const handleCheckClick = () => {
-	// 	// toggleTaskComplete(taskId, task.id)
-	// }
+
+	useHotkeys("Escape", () => {
+		onClose()
+	})
 
 	// const handlePlayClick = () => {
 	// 	if (isActive) {
@@ -99,9 +123,6 @@ export function TaskDetailModal({ taskId, onClose }: TaskDetailModalProps) {
 					</div>
 					<div className="flex items-center gap-3">
 						<button className="text-xs text-[#999] hover:text-[#e6e6e6]">
-							Start: Nov 30
-						</button>
-						<button className="text-xs text-[#999] hover:text-[#e6e6e6]">
 							Due
 						</button>
 						<button className="text-xs text-[#999] hover:text-[#e6e6e6]">
@@ -113,7 +134,10 @@ export function TaskDetailModal({ taskId, onClose }: TaskDetailModalProps) {
 									<MoreHorizontal className="w-4 h-4" />
 								</button>
 							</DropdownMenuTrigger>
-							<DropdownMenuContent align="end" className="bg-[#1e1e1e] border-[#333]">
+							<DropdownMenuContent
+								align="end"
+								className="bg-[#1e1e1e] border-[#333]"
+							>
 								<DropdownMenuItem
 									onClick={handleDelete}
 									className="text-red-500 focus:text-red-500 focus:bg-red-500/10 cursor-pointer"
@@ -123,9 +147,6 @@ export function TaskDetailModal({ taskId, onClose }: TaskDetailModalProps) {
 								</DropdownMenuItem>
 							</DropdownMenuContent>
 						</DropdownMenu>
-						{/* <button className="p-1 text-[#666] hover:text-[#e6e6e6] hover:bg-[#333] rounded">
-							<Maximize2 className="w-4 h-4" />
-						</button> */}
 						<button
 							className="p-1 text-[#666] hover:text-[#e6e6e6] hover:bg-[#333] rounded"
 							onClick={onClose}
@@ -134,28 +155,6 @@ export function TaskDetailModal({ taskId, onClose }: TaskDetailModalProps) {
 						</button>
 					</div>
 				</div>
-
-				{/* Recurring task notice */}
-				{/* {task.isRecurring && (
-					<div className="flex items-center justify-between px-4 py-2 bg-[#1a1a1a] border-b border-[#333]">
-						<span className="text-xs text-[#888]">
-							This task repeats every week on Sunday.{" "}
-							<button className="text-[#3b82f6] hover:underline">
-								Edit task series.
-							</button>
-						</span>
-						<div className="flex items-center gap-2">
-							<button className="flex items-center gap-1 text-xs text-[#888] hover:text-[#e6e6e6]">
-								<ChevronLeft className="w-3 h-3" />
-								Previous
-							</button>
-							<button className="flex items-center gap-1 text-xs text-[#888] hover:text-[#e6e6e6]">
-								Next
-								<ChevronRight className="w-3 h-3" />
-							</button>
-						</div>
-					</div>
-				)} */}
 
 				{/* Task title section */}
 				<div className="px-4 py-4 border-b border-[#333]">
@@ -170,13 +169,15 @@ export function TaskDetailModal({ taskId, onClose }: TaskDetailModalProps) {
 								<Circle className="w-6 h-6 text-[#555] hover:text-[#888]" />
 							)}
 						</button>
-						<h2
-							className={`text-lg font-medium flex-1 ${
+						<Input
+							value={title}
+							onChange={(e) => setTitle(e.target.value)}
+							onBlur={handleTitleBlur}
+							onKeyDown={handleTitleKeyDown}
+							className={`text-lg md:text-xl font-medium flex-1 border-none bg-transparent px-0 focus-visible:ring-0 focus-visible:ring-offset-0 ${
 								task.completed ? "text-[#555] line-through" : "text-[#e6e6e6]"
 							}`}
-						>
-							{task.title}
-						</h2>
+						/>
 						{/* <button
 							onClick={handlePlayClick}
 							className={`p-1.5 rounded transition-colors ${
@@ -211,12 +212,14 @@ export function TaskDetailModal({ taskId, onClose }: TaskDetailModalProps) {
 				</div>
 
 				{/* Notes section */}
-				<div className="px-4 py-3 min-h-[120px] border-b border-[#333]">
-					<input
-						type="text"
+				<div className="px-4 py-3 border-b border-[#333]">
+					<Textarea
+						value={description}
+						onChange={(e) => setDescription(e.target.value)}
+						onBlur={handleDescriptionBlur}
+						onKeyDown={handleDescriptionKeyDown}
 						placeholder="Notes..."
-						defaultValue={task.description}
-						className="w-full bg-transparent text-sm text-[#888] placeholder-[#555] outline-none"
+						className="w-full h-[120px] bg-transparent text-sm text-[#888] placeholder-[#555] border-none px-0 resize-none focus-visible:ring-0 focus-visible:ring-offset-0"
 					/>
 				</div>
 
