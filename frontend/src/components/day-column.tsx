@@ -1,4 +1,5 @@
 import type React from "react"
+import { useRef, useState, useCallback, MutableRefObject } from "react"
 import { Plus, Circle, CheckCircle2 } from "lucide-react"
 import { useTaskManager } from "./task-manager"
 import { format, isSameDay } from "date-fns"
@@ -57,10 +58,6 @@ export function DayColumn({ day, progress }: DayColumnProps) {
 	const { data } = usePbFullList("tasks")
 	const currentDayData = data?.filter((x) => isSameDay(x.allocated_date, day))
 
-	const {
-		update: { mutate: updateTask },
-	} = usePbMutations("tasks")
-
 	// Sort tasks: incomplete first (by order descending), then completed (by order descending)
 	const sortedTasks = currentDayData?.sort(
 		(a, b) =>
@@ -71,45 +68,9 @@ export function DayColumn({ day, progress }: DayColumnProps) {
 	// Get only incomplete tasks for order calculations
 	const incompleteTasks = sortedTasks?.filter((t) => !t.completed) ?? []
 
-	// Drop zone for the column (when dropping at the end) - places at end of incomplete tasks
-	const [{ isOver }, dropRef] = useDrop({
-		accept: ITEM_TYPE,
-		drop: (item: DragItem, monitor) => {
-			// If already handled by a TaskCardWrapper, don't handle again
-			if (monitor.didDrop()) return
-
-			const newOrder = calculateNewOrder(incompleteTasks.length, incompleteTasks)
-			const isSameDay_ = isSameDay(item.day, day)
-			
-			// If same day and dragging from the last incomplete position, no change needed
-			const lastIncompleteIndex = incompleteTasks.length - 1
-			if (isSameDay_ && item.index === lastIncompleteIndex && !item.completed) {
-				return
-			}
-			
-			if (isSameDay_) {
-				// Just update order
-				updateTask({ id: item.id, order: newOrder })
-			} else {
-				// Update both order and allocated_date
-				updateTask({
-					id: item.id,
-					order: newOrder,
-					allocated_date: format(day, "yyyy-MM-dd")
-				})
-			}
-		},
-		collect: (monitor) => ({
-			isOver: monitor.isOver({ shallow: true }),
-		}),
-	})
-
 	return (
 		<div
-			ref={dropRef}
-			className={`flex-1 min-w-0 sm:min-w-[250px] sm:w-[250px] sm:flex-none flex flex-col border-r border-[#252525] last:border-r-0 ${
-				isOver ? "bg-[#1e1e1e]" : ""
-			}`}
+			className="flex-1 min-w-0 sm:min-w-[250px] sm:w-[250px] sm:flex-none flex flex-col border-r border-[#252525] last:border-r-0"
 		>
 			<div className="p-3 pb-2">
 				<div className="flex items-baseline justify-between">
@@ -143,69 +104,94 @@ export function DayColumn({ day, progress }: DayColumnProps) {
 				</button>
 			</div>
 
-			<div className="flex-1 overflow-y-auto px-2 pb-2 space-y-1.5">
-				{sortedTasks?.map((task, index) => (
-					<TaskCardWrapper
-						key={task.id}
-						task={task}
-						day={day}
-						index={index}
-						incompleteTasks={incompleteTasks}
-					/>
-				))}
-				{/* Empty drop zone at the end for better UX */}
-				<div className="h-8" />
-			</div>
+			<TasksDropZone
+				day={day}
+				sortedTasks={sortedTasks}
+				incompleteTasks={incompleteTasks}
+			/>
 		</div>
 	)
 }
 
-interface TaskCardWrapperProps {
-	task: TasksResponse<unknown>
+interface TasksDropZoneProps {
 	day: Date
-	index: number
+	sortedTasks: TasksResponse<unknown>[] | undefined
 	incompleteTasks: TasksResponse<unknown>[]
 }
 
-function TaskCardWrapper({ task, day, index, incompleteTasks }: TaskCardWrapperProps) {
+function TasksDropZone({ day, sortedTasks, incompleteTasks }: TasksDropZoneProps) {
+	const containerRef = useRef<HTMLDivElement | null>(null) as MutableRefObject<HTMLDivElement | null>
+	const [dropIndex, setDropIndex] = useState<number | null>(null)
+
 	const {
 		update: { mutate: updateTask },
 	} = usePbMutations("tasks")
 
-	// Get the index within incomplete tasks (for order calculation)
-	const incompleteIndex = incompleteTasks.findIndex((t) => t.id === task.id)
-	
-	const [{ isOver, canShowIndicator }, dropRef] = useDrop({
+	const [{ isOver }, dropRef] = useDrop({
 		accept: ITEM_TYPE,
+		hover: (item: DragItem, monitor) => {
+			if (!containerRef.current) return
+
+			const clientOffset = monitor.getClientOffset()
+			if (!clientOffset) return
+
+			// Calculate which index to drop at based on mouse Y position
+			const containerRect = containerRef.current.getBoundingClientRect()
+			const y = clientOffset.y - containerRect.top + containerRef.current.scrollTop
+
+			// Find the drop index based on the task card positions
+			const cards = containerRef.current.querySelectorAll('[data-task-id]')
+			let newDropIndex = incompleteTasks.length // Default to end of incomplete tasks
+
+			for (let i = 0; i < cards.length; i++) {
+				const card = cards[i] as HTMLElement
+				const cardRect = card.getBoundingClientRect()
+				const cardTop = cardRect.top - containerRect.top + containerRef.current.scrollTop
+				const cardMiddle = cardTop + cardRect.height / 2
+				
+				// Check if this is a completed task - if so, we've reached the end of incomplete tasks
+				const taskId = card.getAttribute('data-task-id')
+				const task = sortedTasks?.find(t => t.id === taskId)
+				if (task?.completed) {
+					break
+				}
+
+				if (y < cardMiddle) {
+					newDropIndex = i
+					break
+				} else {
+					newDropIndex = i + 1
+				}
+			}
+
+			// Clamp to incomplete tasks length
+			newDropIndex = Math.min(newDropIndex, incompleteTasks.length)
+
+			// Check if this would result in no change (for same-day moves)
+			const isSameDay_ = isSameDay(item.day, day)
+			if (isSameDay_ && !item.completed) {
+				// Dragging from index i to position i or i+1 results in no visual change
+				if (item.index === newDropIndex || item.index === newDropIndex - 1) {
+					setDropIndex(null)
+					return
+				}
+			}
+
+			setDropIndex(newDropIndex)
+		},
 		drop: (item: DragItem) => {
-			// Don't do anything if dropping on itself
-			if (item.id === task.id) return
+			if (dropIndex === null) return
 
 			const isSameDay_ = isSameDay(item.day, day)
 
-			// If dropping on a completed task, place at end of incomplete tasks
-			if (task.completed) {
-				const newOrder = calculateNewOrder(incompleteTasks.length, incompleteTasks)
-				if (isSameDay_) {
-					updateTask({ id: item.id, order: newOrder })
-				} else {
-					updateTask({
-						id: item.id,
-						order: newOrder,
-						allocated_date: format(day, "yyyy-MM-dd"),
-					})
+			// Check if this would result in no change
+			if (isSameDay_ && !item.completed) {
+				if (item.index === dropIndex || item.index === dropIndex - 1) {
+					return
 				}
-				return
 			}
 
-			// If same day, check if the drop would result in no visual change
-			// Dropping at incompleteIndex means "place before this item"
-			// If dragging from index i, dropping at i or i+1 results in no change
-			if (isSameDay_ && !item.completed && (item.index === incompleteIndex || item.index === incompleteIndex - 1)) {
-				return
-			}
-
-			const newOrder = calculateNewOrder(incompleteIndex, incompleteTasks)
+			const newOrder = calculateNewOrder(dropIndex, incompleteTasks)
 
 			if (isSameDay_) {
 				updateTask({ id: item.id, order: newOrder })
@@ -217,31 +203,63 @@ function TaskCardWrapper({ task, day, index, incompleteTasks }: TaskCardWrapperP
 				})
 			}
 		},
-		collect: (monitor) => {
-			const item = monitor.getItem() as DragItem | null
-			const isOver = monitor.isOver()
-			if (!item) return { isOver, canShowIndicator: true }
-			
-			// If target is completed task, always allow drop indicator
-			if (task.completed) {
-				return { isOver, canShowIndicator: true }
-			}
-			
-			const isSameDay_ = isSameDay(item.day, day)
-			// Don't show indicator if this would result in no change
-			if (isSameDay_ && !item.completed && (item.index === incompleteIndex || item.index === incompleteIndex - 1)) {
-				return { isOver, canShowIndicator: false }
-			}
-			return { isOver, canShowIndicator: true }
-		},
+		collect: (monitor) => ({
+			isOver: monitor.isOver(),
+		}),
 	})
 
+	// Reset drop index when not hovering
+	const prevIsOver = useRef(isOver)
+	if (prevIsOver.current && !isOver) {
+		if (dropIndex !== null) setDropIndex(null)
+	}
+	prevIsOver.current = isOver
+
+	// Combine refs
+	const setRefs = useCallback(
+		(node: HTMLDivElement | null) => {
+			containerRef.current = node
+			dropRef(node)
+		},
+		[dropRef],
+	)
+
 	return (
-		<div ref={dropRef} className="relative">
-			{isOver && canShowIndicator && (
-				<div className="absolute -top-[5px] left-0 right-0 h-1 bg-[#6366f1] rounded-full z-10" />
+		<div ref={setRefs} className="flex-1 overflow-y-auto px-2 pb-2">
+			{/* Show indicator at the top of the list (dropIndex === 0 with tasks) */}
+			{isOver && dropIndex === 0 && incompleteTasks.length > 0 && (
+				<div className="h-1 bg-[#6366f1] rounded-full mb-1.5" />
 			)}
-			<TaskCard task={task} day={day} index={index} />
+			{sortedTasks?.map((task, index) => {
+				const incompleteIndex = incompleteTasks.findIndex((t) => t.id === task.id)
+				// Don't show indicator for dropIndex === 0, we render it above the list instead
+				const showIndicatorAbove = isOver && dropIndex !== null && dropIndex !== 0 && !task.completed && incompleteIndex === dropIndex
+				// Show indicator before the first completed task (when dropIndex === incompleteTasks.length)
+				const isFirstCompletedTask = task.completed && (index === 0 || !sortedTasks[index - 1]?.completed)
+				const showIndicatorBeforeCompleted = isOver && dropIndex === incompleteTasks.length && incompleteTasks.length > 0 && isFirstCompletedTask
+
+				return (
+					<div key={task.id} data-task-id={task.id} className="relative mb-1.5">
+						{showIndicatorAbove && (
+							<div className="absolute -top-[5px] left-0 right-0 h-1 bg-[#6366f1] rounded-full z-10" />
+						)}
+						{showIndicatorBeforeCompleted && (
+							<div className="absolute -top-[5px] left-0 right-0 h-1 bg-[#6366f1] rounded-full z-10" />
+						)}
+						<TaskCard task={task} day={day} index={incompleteIndex !== -1 ? incompleteIndex : index} />
+					</div>
+				)
+			})}
+			{/* Show indicator at the end when there are only incomplete tasks (no completed tasks) */}
+			{isOver && dropIndex === incompleteTasks.length && incompleteTasks.length > 0 && !sortedTasks?.some(t => t.completed) && (
+				<div className="h-1 bg-[#6366f1] rounded-full mb-1.5" />
+			)}
+			{/* Show indicator when dropping into empty list */}
+			{isOver && dropIndex === 0 && incompleteTasks.length === 0 && (
+				<div className="h-1 bg-[#6366f1] rounded-full mb-1.5" />
+			)}
+			{/* Empty drop zone at the end for better UX */}
+			<div className="h-8" />
 		</div>
 	)
 }
