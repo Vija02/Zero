@@ -95,11 +95,13 @@ export type SuperusersRecord = {
 
 export type TasksRecord = {
 	allocated_date: IsoDateString
+	carry_over?: number
 	completed?: boolean
 	created: IsoAutoDateString
 	description?: HTMLString
 	due_date?: IsoDateString
 	id: string
+	order?: number
 	title?: string
 	updated: IsoAutoDateString
 }

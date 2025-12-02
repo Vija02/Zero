@@ -111,19 +111,25 @@ export function DayColumn({ day, progress }: DayColumnProps) {
 			</div>
 
 			<div className="flex-1 overflow-y-auto px-2 pb-2 space-y-1.5">
-				{currentDayData?.map((task) => (
-					<div
-						key={task.id}
-						// onDragOver={(e) => handleDragOver(e, index)}
-						// onDragLeave={handleDragLeave}
-						// onDrop={(e) => handleDrop(e, index)}
-					>
-						{/* {dragOverIndex === index && (
+				{currentDayData
+					?.sort(
+						(a, b) =>
+							(a.completed === b.completed ? 0 : a.completed ? 1 : -1) ||
+							b.order - a.order,
+					)
+					?.map((task) => (
+						<div
+							key={task.id}
+							// onDragOver={(e) => handleDragOver(e, index)}
+							// onDragLeave={handleDragLeave}
+							// onDrop={(e) => handleDrop(e, index)}
+						>
+							{/* {dragOverIndex === index && (
 							<div className="h-1 bg-[#6366f1] rounded-full mb-1.5" />
 						)} */}
-						<TaskCard task={task} />
-					</div>
-				))}
+							<TaskCard task={task} />
+						</div>
+					))}
 				{/* Drop zone at the end */}
 				{/* <div
 					className="h-8"
