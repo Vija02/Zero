@@ -1,0 +1,252 @@
+/// <reference path="../pb_data/types.d.ts" />
+
+// TODO: Cron how often
+cronAdd("generate_tasks_from_calendar", "0 * * * *", () => {
+	try {
+		const record = $app.findFirstRecordByFilter(
+			"settings",
+			"key = 'access_token'",
+		)
+		const accessToken = record.get("value")
+
+		// TODO: Handle refresh token
+		if (!accessToken) {
+			console.log("No access token found. Aborting")
+			return
+		}
+
+		// Helper function to fetch Google Calendar events using direct HTTP API
+		function fetchGoogleCalendarEvents(accessToken, options) {
+			options = options || {}
+			// TODO: Consider other calendar ID
+			const calendarId = options.calendarId || "primary"
+			const timeMin = options.timeMin || new Date()
+			const timeMax = options.timeMax
+			const maxResults = options.maxResults || 250
+			const singleEvents = options.singleEvents !== false
+			const orderBy = options.orderBy || "startTime"
+
+			// Build query string manually (URLSearchParams not available)
+			const queryParts = [
+				"timeMin=" + encodeURIComponent(timeMin.toISOString()),
+				"maxResults=" + encodeURIComponent(maxResults.toString()),
+				"singleEvents=" + encodeURIComponent(singleEvents.toString()),
+				"orderBy=" + encodeURIComponent(orderBy),
+			]
+
+			if (timeMax) {
+				queryParts.push("timeMax=" + encodeURIComponent(timeMax.toISOString()))
+			}
+
+			const url =
+				"https://www.googleapis.com/calendar/v3/calendars/" +
+				encodeURIComponent(calendarId) +
+				"/events?" +
+				queryParts.join("&")
+
+			const response = $http.send({
+				url: url,
+				method: "GET",
+				headers: {
+					Authorization: `Bearer ${accessToken}`,
+					"Content-Type": "application/json",
+				},
+			})
+
+			if (response.statusCode !== 200) {
+				throw new Error(
+					`Google Calendar API error: ${response.statusCode} - ${response.raw}`,
+				)
+			}
+
+			const data = JSON.parse(response.raw)
+			const events = data.items || []
+
+			return events.map((event) => ({
+				id: event.id,
+				summary: event.summary,
+				description: event.description ?? "",
+				start: event.start?.dateTime || event.start?.date,
+				end: event.end?.dateTime || event.end?.date,
+				htmlLink: event.htmlLink,
+				status: event.status,
+				created: event.created,
+				updated: event.updated,
+			}))
+		}
+
+		// Read events from Google API. Limit to 30 days to the future
+		const now = new Date()
+		const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+
+		const events = fetchGoogleCalendarEvents(accessToken, {
+			calendarId: "primary",
+			timeMin: now,
+			// TODO: Make this configurable
+			timeMax: thirtyDaysLater,
+			// TODO: Make fetch all
+			maxResults: 50,
+			singleEvents: true,
+			orderBy: "startTime",
+		})
+
+		// Helper function to parse task block from description
+		// Format: @@task Nd (where N is number of days before event)
+		//         @title Custom Title (optional)
+		function parseTaskBlock(rawDescription) {
+			function htmlToPlainText(html) {
+				return html
+					.replace(/<style([\s\S]*?)<\/style>/gi, "")
+					.replace(/<script([\s\S]*?)<\/script>/gi, "")
+					.replace(/<\/div>/gi, "\n")
+					.replace(/<\/li>/gi, "\n")
+					.replace(/<li>/gi, "  *  ")
+					.replace(/<\/ul>/gi, "\n")
+					.replace(/<\/p>/gi, "\n")
+					.replace(/<br\s*\/?>/gi, "\n")
+					.replace(/<[^>]+>/gi, "")
+			}
+
+			if (!rawDescription) return null
+
+			const description = htmlToPlainText(rawDescription)
+
+			// Look for @@task block - takes the first one if duplicates
+			const taskMatch = description.match(/@@task\s+(\d+)d/i)
+			if (!taskMatch) {
+				return null
+			}
+
+			const daysBefore = parseInt(taskMatch[1], 10)
+
+			// Look for @title attribute (optional)
+			const titleMatch = description.match(/@title\s+(.+?)(?:\n|$)/i)
+			const title = titleMatch ? titleMatch[1].trim() : null
+
+			return {
+				daysBefore: daysBefore,
+				title: title,
+			}
+		}
+
+		// Helper function to calculate allocated date (N days before event start)
+		function calculateAllocatedDate(eventStartDate, daysBefore) {
+			const eventDate = new Date(eventStartDate)
+			const allocatedDate = new Date(
+				eventDate.getTime() - daysBefore * 24 * 60 * 60 * 1000,
+			)
+			// Set to start of day
+			allocatedDate.setHours(0, 0, 0, 0)
+			return allocatedDate.toISOString()
+		}
+
+		// Create a map of event IDs for quick lookup
+		const eventIds = new Set(events.map((event) => event.id))
+
+		// Get all tasks that have a google_calendar_id (linked to calendar events)
+		const existingCalendarTasks = $app.findRecordsByFilter(
+			"tasks",
+			"google_calendar_id != ''",
+		)
+
+		// Step 1: Delete tasks whose calendar events no longer exist
+		for (const task of existingCalendarTasks) {
+			const calendarId = task.get("google_calendar_id")
+			if (!eventIds.has(calendarId)) {
+				// Calendar event was deleted, delete the task
+				console.log(
+					`Deleting task "${task.get(
+						"title",
+					)}" - calendar event no longer exists`,
+				)
+				$app.delete(task)
+			}
+		}
+
+		// Step 2: Process events - create or update tasks
+		for (const event of events) {
+			const taskBlock = parseTaskBlock(event.description)
+
+			// If no @@task block in description, skip this event (or delete existing task)
+			if (taskBlock === null) {
+				// Check if there's an existing task for this event and delete it
+				try {
+					const existingTask = $app.findFirstRecordByFilter(
+						"tasks",
+						`google_calendar_id = '${event.id}'`,
+					)
+					if (existingTask) {
+						console.log(
+							`Deleting task "${existingTask.get(
+								"title",
+							)}" - no @@task block in event`,
+						)
+						$app.delete(existingTask)
+					}
+				} catch (e) {
+					// No existing task found, nothing to do
+				}
+				continue
+			}
+
+			const allocatedDate = calculateAllocatedDate(
+				event.start,
+				taskBlock.daysBefore,
+			)
+			// Use custom title from @title attribute, or fall back to event summary
+			const taskTitle = taskBlock.title || event.summary
+
+			// Check if a task already exists for this calendar event
+			let existingTask = null
+			try {
+				existingTask = $app.findFirstRecordByFilter(
+					"tasks",
+					`google_calendar_id = '${event.id}'`,
+				)
+			} catch (e) {
+				// No existing task found
+			}
+
+			if (existingTask) {
+				// Update existing task if allocated_date or title changed
+				const currentAllocatedDate = new Date(
+					existingTask.get("allocated_date"),
+				).toISOString()
+				const currentTitle = existingTask.get("title")
+				const newAllocatedDateNormalized = allocatedDate.split("T")[0]
+				const currentAllocatedDateNormalized = currentAllocatedDate
+					? currentAllocatedDate.split("T")[0]
+					: ""
+
+				const needsUpdate =
+					currentAllocatedDateNormalized !== newAllocatedDateNormalized ||
+					currentTitle !== taskTitle
+
+				if (needsUpdate) {
+					console.log(
+						`Updating task "${taskTitle}" - allocated_date: ${currentAllocatedDateNormalized} -> ${newAllocatedDateNormalized}, title: ${currentTitle} -> ${taskTitle}`,
+					)
+					existingTask.set("allocated_date", allocatedDate)
+					existingTask.set("title", taskTitle)
+					existingTask.set("due_date", event.start)
+					$app.save(existingTask)
+				}
+			} else {
+				// Create new task
+				console.log(`Creating new task "${taskTitle}" for ${allocatedDate}`)
+				const collection = $app.findCollectionByNameOrId("tasks")
+				const newTask = new Record(collection)
+				newTask.set("title", taskTitle)
+				newTask.set("google_calendar_id", event.id)
+				newTask.set("allocated_date", allocatedDate)
+				newTask.set("due_date", event.start)
+				newTask.set("completed", false)
+				$app.save(newTask)
+			}
+		}
+
+		console.log("Calendar task sync completed successfully")
+	} catch (e) {
+		console.error(e)
+	}
+})
