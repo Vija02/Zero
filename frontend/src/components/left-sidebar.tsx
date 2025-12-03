@@ -7,9 +7,11 @@ import {
 	Home,
 	ListTodo,
 	LogOut,
+	Settings,
 	Target,
 	X,
 } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 import { useTaskManager } from "./task-manager"
 
 const mainNavItems = [
@@ -23,6 +25,7 @@ export function LeftSidebar() {
 		useTaskManager()
 
 	const pb = usePocketBase()
+	const navigate = useNavigate()
 
 	const handleLogout = () => {
 		pb.authStore.clear()
@@ -98,8 +101,15 @@ export function LeftSidebar() {
 				<nav className="px-2 pb-2">
 					<div className="space-y-0.5 mt-1">
 						<button
+							onClick={() => navigate("/settings")}
+							className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors cursor-pointer text-[#888] hover:bg-[#1e1e1e] hover:text-[#e6e6e6]"
+						>
+							<Settings className="w-4 h-4" />
+							Settings
+						</button>
+						<button
 							onClick={handleLogout}
-							className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors cursor-pointer`}
+							className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors cursor-pointer text-[#888] hover:bg-[#1e1e1e] hover:text-[#e6e6e6]"
 						>
 							<LogOut className="w-4 h-4" />
 							Logout

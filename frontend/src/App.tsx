@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import { ProtectedRoute } from "./modules/ProtectedRoute"
 import { LoginPage } from "./pages/LoginPage"
 import { DashboardPage } from "./pages/DashboardPage"
+import { SettingsPage } from "./pages/SettingsPage"
 import { PocketBaseProvider } from "use-pocketbase"
 import { DndProvider } from "react-dnd"
 import { HTML5Backend } from "react-dnd-html5-backend"
@@ -19,6 +20,7 @@ function App() {
 						<Route path="/login" element={<LoginPage />} />
 						<Route element={<ProtectedRoute />}>
 							<Route path="/dashboard" element={<DashboardPage />} />
+							<Route path="/settings" element={<SettingsPage />} />
 						</Route>
 						<Route path="/" element={<Navigate to="/dashboard" replace />} />
 						<Route path="*" element={<Navigate to="/dashboard" replace />} />
