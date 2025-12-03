@@ -58,7 +58,6 @@ export function TaskDetailModal({ taskId, onClose }: TaskDetailModalProps) {
 
 	const handleDescriptionBlur = () => {
 		if (task && description !== (task.description || "")) {
-			console.log("Updating description to:", description)
 			updateTask({ id: task.id, description })
 		}
 	}
