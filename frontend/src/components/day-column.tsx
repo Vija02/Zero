@@ -1,6 +1,6 @@
 import type React from "react"
 import { useRef, useState, useCallback, MutableRefObject } from "react"
-import { Plus, Circle, CheckCircle2 } from "lucide-react"
+import { Plus, Circle, CheckCircle2, RefreshCw } from "lucide-react"
 import { useTaskManager } from "./task-manager"
 import { format, isSameDay } from "date-fns"
 import { usePbFullList } from "@/api/usePbQueries"
@@ -69,9 +69,7 @@ export function DayColumn({ day, progress }: DayColumnProps) {
 	const incompleteTasks = sortedTasks?.filter((t) => !t.completed) ?? []
 
 	return (
-		<div
-			className="flex-1 min-w-0 sm:min-w-[250px] sm:w-[250px] sm:flex-none flex flex-col border-r border-[#252525] last:border-r-0"
-		>
+		<div className="flex-1 min-w-0 sm:min-w-[250px] sm:w-[250px] sm:flex-none flex flex-col border-r border-[#252525] last:border-r-0">
 			<div className="p-3 pb-2">
 				<div className="flex items-baseline justify-between">
 					<h2 className="text-base font-medium text-[#e6e6e6]">
@@ -119,8 +117,14 @@ interface TasksDropZoneProps {
 	incompleteTasks: TasksResponse<unknown>[]
 }
 
-function TasksDropZone({ day, sortedTasks, incompleteTasks }: TasksDropZoneProps) {
-	const containerRef = useRef<HTMLDivElement | null>(null) as MutableRefObject<HTMLDivElement | null>
+function TasksDropZone({
+	day,
+	sortedTasks,
+	incompleteTasks,
+}: TasksDropZoneProps) {
+	const containerRef = useRef<HTMLDivElement | null>(
+		null,
+	) as MutableRefObject<HTMLDivElement | null>
 	const [dropIndex, setDropIndex] = useState<number | null>(null)
 
 	const {
@@ -137,21 +141,23 @@ function TasksDropZone({ day, sortedTasks, incompleteTasks }: TasksDropZoneProps
 
 			// Calculate which index to drop at based on mouse Y position
 			const containerRect = containerRef.current.getBoundingClientRect()
-			const y = clientOffset.y - containerRect.top + containerRef.current.scrollTop
+			const y =
+				clientOffset.y - containerRect.top + containerRef.current.scrollTop
 
 			// Find the drop index based on the task card positions
-			const cards = containerRef.current.querySelectorAll('[data-task-id]')
+			const cards = containerRef.current.querySelectorAll("[data-task-id]")
 			let newDropIndex = incompleteTasks.length // Default to end of incomplete tasks
 
 			for (let i = 0; i < cards.length; i++) {
 				const card = cards[i] as HTMLElement
 				const cardRect = card.getBoundingClientRect()
-				const cardTop = cardRect.top - containerRect.top + containerRef.current.scrollTop
+				const cardTop =
+					cardRect.top - containerRect.top + containerRef.current.scrollTop
 				const cardMiddle = cardTop + cardRect.height / 2
-				
+
 				// Check if this is a completed task - if so, we've reached the end of incomplete tasks
-				const taskId = card.getAttribute('data-task-id')
-				const task = sortedTasks?.find(t => t.id === taskId)
+				const taskId = card.getAttribute("data-task-id")
+				const task = sortedTasks?.find((t) => t.id === taskId)
 				if (task?.completed) {
 					break
 				}
@@ -231,12 +237,24 @@ function TasksDropZone({ day, sortedTasks, incompleteTasks }: TasksDropZoneProps
 				<div className="h-1 bg-[#6366f1] rounded-full mb-1.5" />
 			)}
 			{sortedTasks?.map((task, index) => {
-				const incompleteIndex = incompleteTasks.findIndex((t) => t.id === task.id)
+				const incompleteIndex = incompleteTasks.findIndex(
+					(t) => t.id === task.id,
+				)
 				// Don't show indicator for dropIndex === 0, we render it above the list instead
-				const showIndicatorAbove = isOver && dropIndex !== null && dropIndex !== 0 && !task.completed && incompleteIndex === dropIndex
+				const showIndicatorAbove =
+					isOver &&
+					dropIndex !== null &&
+					dropIndex !== 0 &&
+					!task.completed &&
+					incompleteIndex === dropIndex
 				// Show indicator before the first completed task (when dropIndex === incompleteTasks.length)
-				const isFirstCompletedTask = task.completed && (index === 0 || !sortedTasks[index - 1]?.completed)
-				const showIndicatorBeforeCompleted = isOver && dropIndex === incompleteTasks.length && incompleteTasks.length > 0 && isFirstCompletedTask
+				const isFirstCompletedTask =
+					task.completed && (index === 0 || !sortedTasks[index - 1]?.completed)
+				const showIndicatorBeforeCompleted =
+					isOver &&
+					dropIndex === incompleteTasks.length &&
+					incompleteTasks.length > 0 &&
+					isFirstCompletedTask
 
 				return (
 					<div key={task.id} data-task-id={task.id} className="relative mb-1.5">
@@ -246,14 +264,21 @@ function TasksDropZone({ day, sortedTasks, incompleteTasks }: TasksDropZoneProps
 						{showIndicatorBeforeCompleted && (
 							<div className="absolute -top-[5px] left-0 right-0 h-1 bg-[#6366f1] rounded-full z-10" />
 						)}
-						<TaskCard task={task} day={day} index={incompleteIndex !== -1 ? incompleteIndex : index} />
+						<TaskCard
+							task={task}
+							day={day}
+							index={incompleteIndex !== -1 ? incompleteIndex : index}
+						/>
 					</div>
 				)
 			})}
 			{/* Show indicator at the end when there are only incomplete tasks (no completed tasks) */}
-			{isOver && dropIndex === incompleteTasks.length && incompleteTasks.length > 0 && !sortedTasks?.some(t => t.completed) && (
-				<div className="h-1 bg-[#6366f1] rounded-full mb-1.5" />
-			)}
+			{isOver &&
+				dropIndex === incompleteTasks.length &&
+				incompleteTasks.length > 0 &&
+				!sortedTasks?.some((t) => t.completed) && (
+					<div className="h-1 bg-[#6366f1] rounded-full mb-1.5" />
+				)}
 			{/* Show indicator when dropping into empty list */}
 			{isOver && dropIndex === 0 && incompleteTasks.length === 0 && (
 				<div className="h-1 bg-[#6366f1] rounded-full mb-1.5" />
@@ -347,16 +372,31 @@ function TaskCard({ task, day, index }: TaskCardProps) {
 				)} */}
 
 				<div className="flex items-center justify-between mt-2">
-					<button
-						onClick={handleCheckClick}
-						className="flex-shrink-0 hover:scale-110 transition-transform cursor-pointer"
-					>
-						{task.completed ? (
-							<CheckCircle2 className="w-4 h-4 text-[#22c55e]" />
-						) : (
-							<Circle className="w-4 h-4 text-[#444] hover:text-[#666]" />
+					<div className="flex items-center gap-2">
+						<button
+							onClick={handleCheckClick}
+							className="flex-shrink-0 hover:scale-110 transition-transform cursor-pointer"
+						>
+							{task.completed ? (
+								<CheckCircle2 className="w-4 h-4 text-[#22c55e]" />
+							) : (
+								<Circle className="w-4 h-4 text-[#444] hover:text-[#666]" />
+							)}
+						</button>
+						{task.carry_over > 0 && (
+							<div
+								className="relative flex items-center justify-center"
+								title={`Carried over ${task.carry_over} time${
+									task.carry_over > 1 ? "s" : ""
+								}`}
+							>
+								<RefreshCw className="w-5 h-5 opacity-30" />
+								<span className="absolute text-[10px] font-bold opacity-30">
+									{task.carry_over}
+								</span>
+							</div>
 						)}
-					</button>
+					</div>
 					<span
 						className="text-[10px] px-1.5 py-0.5 rounded"
 						style={{ color: tagColor }}
