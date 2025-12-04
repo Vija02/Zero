@@ -29,3 +29,7 @@ services:
       caddy.reverse_proxy: "{{upstreams 8090}}"
       caddy.reverse_proxy.transport: "http"
       caddy.request_body.max_size: "50MB"
+
+networks:
+  caddy:
+    external: true
