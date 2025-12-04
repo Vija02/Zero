@@ -15,6 +15,7 @@ RUN wget https://github.com/pocketbase/pocketbase/releases/download/v${VERSION}/
 FROM oven/bun AS frontend_builder
 
 COPY ./frontend /
+RUN bun install
 RUN bun run build
 
 # Build final image
