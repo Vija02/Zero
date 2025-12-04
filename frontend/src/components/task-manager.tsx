@@ -1,5 +1,3 @@
-import type React from "react"
-
 import {
 	useState,
 	createContext,
@@ -14,7 +12,6 @@ import { BacklogPanel } from "./backlog-panel"
 import { TaskDetailModal } from "./task-detail-modal"
 import { AddTaskModal } from "./add-task-modal"
 import { ActiveTaskBar } from "./active-task-bar"
-import { usePbList } from "@/api/usePbQueries"
 
 export interface Task {
 	id: string
@@ -42,7 +39,6 @@ interface TaskManagerContextType {
 	showBacklog: boolean
 	toggleBacklog: () => void
 	openAddTask: (day: Date) => void
-	addTask: (dayKey: string, task: Task) => void
 	isMobile: boolean
 	sidebarOpen: boolean
 	toggleSidebar: () => void
@@ -50,13 +46,6 @@ interface TaskManagerContextType {
 	startTask: (task: Task, dayKey: string) => void
 	stopTask: () => void
 	elapsedTime: number
-	moveTask: (
-		fromDay: string,
-		toDay: string,
-		taskId: string,
-		toIndex?: number,
-	) => void
-	reorderTask: (dayKey: string, fromIndex: number, toIndex: number) => void
 }
 
 export const TaskManagerContext = createContext<TaskManagerContextType | null>(
@@ -80,7 +69,7 @@ export function TaskManager() {
 		dayKey: string
 	} | null>(null)
 	const [elapsedTime, setElapsedTime] = useState(0)
-	const timerRef = useRef<NodeJS.Timeout | null>(null)
+	const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
 	useEffect(() => {
 		const checkMobile = () => setIsMobile(window.innerWidth < 768)
@@ -118,13 +107,6 @@ export function TaskManager() {
 		setAddTaskDay(day)
 	}, [])
 
-	const addTask = useCallback((dayKey: string, task: Task) => {
-		// setTasks((prev) => ({
-		// 	...prev,
-		// 	[dayKey]: [...(prev[dayKey] || []), task],
-		// }))
-	}, [])
-
 	const toggleSidebar = useCallback(() => {
 		setSidebarOpen((prev) => !prev)
 	}, [])
@@ -145,41 +127,7 @@ export function TaskManager() {
 		// 	}))
 		// }
 		// setActiveTask(null)
-	}, [activeTask, elapsedTime])
-
-	const moveTask = useCallback(
-		(fromDay: string, toDay: string, taskId: string, toIndex?: number) => {
-			// setTasks((prev) => {
-			// 	const taskToMove = prev[fromDay].find((t) => t.id === taskId)
-			// 	if (!taskToMove) return prev
-			// 	const newFromTasks = prev[fromDay].filter((t) => t.id !== taskId)
-			// 	const newToTasks = [...(prev[toDay] || [])]
-			// 	if (toIndex !== undefined) {
-			// 		newToTasks.splice(toIndex, 0, taskToMove)
-			// 	} else {
-			// 		newToTasks.push(taskToMove)
-			// 	}
-			// 	return {
-			// 		...prev,
-			// 		[fromDay]: newFromTasks,
-			// 		[toDay]: newToTasks,
-			// 	}
-			// })
-		},
-		[],
-	)
-
-	const reorderTask = useCallback(
-		(dayKey: string, fromIndex: number, toIndex: number) => {
-			// setTasks((prev) => {
-			// 	const newTasks = [...prev[dayKey]]
-			// 	const [removed] = newTasks.splice(fromIndex, 1)
-			// 	newTasks.splice(toIndex, 0, removed)
-			// 	return { ...prev, [dayKey]: newTasks }
-			// })
-		},
-		[],
-	)
+	}, [])
 
 	return (
 		<TaskManagerContext.Provider
@@ -191,7 +139,6 @@ export function TaskManager() {
 				showBacklog,
 				toggleBacklog,
 				openAddTask,
-				addTask,
 				isMobile,
 				sidebarOpen,
 				toggleSidebar,
@@ -199,8 +146,6 @@ export function TaskManager() {
 				startTask,
 				stopTask,
 				elapsedTime,
-				moveTask,
-				reorderTask,
 			}}
 		>
 			<div className="flex h-screen bg-[#131314] text-[#e6e6e6] overflow-hidden">
