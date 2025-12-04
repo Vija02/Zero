@@ -3,11 +3,20 @@
 // TODO: Cron how often
 cronAdd("generate_tasks_from_calendar", "0 * * * *", () => {
 	try {
-		const record = $app.findFirstRecordByFilter(
-			"settings",
-			"key = 'access_token'",
-		)
-		const accessToken = record.get("value")
+		function getSetting(key) {
+			const record = $app.findRecordsByFilter(
+				"settings",
+				`key = '${key}'`,
+				null,
+				1,
+				0,
+			)
+			return record?.[0]?.get("value")
+		}
+
+		const accessToken = getSetting("access_token")
+		const daysInAdvance = getSetting("days_in_advance") ?? 30
+		const calendarIds = (getSetting("calendar_ids") ?? "").split("\n")
 
 		// TODO: Handle refresh token
 		if (!accessToken) {
@@ -18,7 +27,6 @@ cronAdd("generate_tasks_from_calendar", "0 * * * *", () => {
 		// Helper function to fetch Google Calendar events using direct HTTP API
 		function fetchGoogleCalendarEvents(accessToken, options) {
 			options = options || {}
-			// TODO: Consider other calendar ID
 			const calendarId = options.calendarId || "primary"
 			const timeMin = options.timeMin || new Date()
 			const timeMax = options.timeMax
@@ -75,20 +83,24 @@ cronAdd("generate_tasks_from_calendar", "0 * * * *", () => {
 			}))
 		}
 
-		// Read events from Google API. Limit to 30 days to the future
 		const now = new Date()
-		const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+		const daysLater = new Date(
+			now.getTime() + daysInAdvance * 24 * 60 * 60 * 1000,
+		)
 
-		const events = fetchGoogleCalendarEvents(accessToken, {
-			calendarId: "primary",
-			timeMin: now,
-			// TODO: Make this configurable
-			timeMax: thirtyDaysLater,
-			// TODO: Make fetch all
-			maxResults: 50,
-			singleEvents: true,
-			orderBy: "startTime",
-		})
+		const events = calendarIds
+			.map((calendarId) =>
+				fetchGoogleCalendarEvents(accessToken, {
+					calendarId,
+					timeMin: now,
+					timeMax: daysLater,
+					// Should be enough. This is the max. https://developers.google.com/workspace/calendar/api/v3/reference/events/list
+					maxResults: 2500,
+					singleEvents: true,
+					orderBy: "startTime",
+				}),
+			)
+			.flat()
 
 		// Helper function to parse task block from description
 		// Format: @@task Nd (where N is number of days before event)

@@ -1,14 +1,23 @@
 import { useState, useEffect, useCallback } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import { ArrowLeft, ExternalLink } from "lucide-react"
+import { ArrowLeft, ExternalLink, AlertCircle, RefreshCw, Check } from "lucide-react"
 import { usePbMutations } from "@/api/usePbMutations"
 import { usePbFullList } from "@/api/usePbQueries"
+
+interface GoogleCalendar {
+	id: string
+	summary: string
+	primary?: boolean
+	backgroundColor?: string
+}
 
 const CLIENT_ID_KEY = "client_id"
 const CLIENT_SECRET_KEY = "client_secret"
 const REDIRECT_URI_KEY = "redirect_uri"
 const ACCESS_TOKEN_KEY = "access_token"
 const REFRESH_TOKEN_KEY = "refresh_token"
+const CALENDAR_IDS_KEY = "calendar_ids"
+const DAYS_IN_ADVANCE_KEY = "days_in_advance"
 
 export function SettingsPage() {
 	const [clientId, setClientId] = useState("")
@@ -16,7 +25,11 @@ export function SettingsPage() {
 	const [redirectUri, setRedirectUri] = useState("")
 	const [accessToken, setAccessToken] = useState("")
 	const [refreshToken, setRefreshToken] = useState("")
+	const [calendarIds, setCalendarIds] = useState("")
+	const [daysInAdvance, setDaysInAdvance] = useState("30")
 	const [isExchanging, setIsExchanging] = useState(false)
+	const [isFetchingCalendars, setIsFetchingCalendars] = useState(false)
+	const [availableCalendars, setAvailableCalendars] = useState<GoogleCalendar[]>([])
 	const [message, setMessage] = useState<{
 		type: "success" | "error"
 		text: string
@@ -37,6 +50,10 @@ export function SettingsPage() {
 	const redirectUriRecord = data?.find((x) => x.key === REDIRECT_URI_KEY)
 	const accessTokenRecord = data?.find((x) => x.key === ACCESS_TOKEN_KEY)
 	const refreshTokenRecord = data?.find((x) => x.key === REFRESH_TOKEN_KEY)
+	const calendarIdsRecord = data?.find((x) => x.key === CALENDAR_IDS_KEY)
+	const daysInAdvanceRecord = data?.find((x) => x.key === DAYS_IN_ADVANCE_KEY)
+
+	const isAuthenticated = !!accessToken
 
 	// Initialize state from fetched data
 	useEffect(() => {
@@ -46,6 +63,8 @@ export function SettingsPage() {
 			if (redirectUriRecord) setRedirectUri(redirectUriRecord.value || "")
 			if (accessTokenRecord) setAccessToken(accessTokenRecord.value || "")
 			if (refreshTokenRecord) setRefreshToken(refreshTokenRecord.value || "")
+			if (calendarIdsRecord) setCalendarIds(calendarIdsRecord.value || "")
+			if (daysInAdvanceRecord) setDaysInAdvance(daysInAdvanceRecord.value || "30")
 		}
 	}, [
 		data,
@@ -54,6 +73,8 @@ export function SettingsPage() {
 		redirectUriRecord,
 		accessTokenRecord,
 		refreshTokenRecord,
+		calendarIdsRecord,
+		daysInAdvanceRecord,
 	])
 
 	// Save setting helper - creates if doesn't exist, updates if it does
@@ -84,6 +105,71 @@ export function SettingsPage() {
 	const handleRedirectUriBlur = () => {
 		saveSetting(REDIRECT_URI_KEY, redirectUri, redirectUriRecord)
 	}
+
+	const handleCalendarIdsBlur = () => {
+		saveSetting(CALENDAR_IDS_KEY, calendarIds, calendarIdsRecord)
+	}
+
+	const handleDaysInAdvanceBlur = () => {
+		saveSetting(DAYS_IN_ADVANCE_KEY, daysInAdvance, daysInAdvanceRecord)
+	}
+
+	const fetchCalendars = useCallback(async () => {
+		if (!accessToken) return
+
+		setIsFetchingCalendars(true)
+		try {
+			const response = await fetch(
+				"https://www.googleapis.com/calendar/v3/users/me/calendarList",
+				{
+					headers: {
+						Authorization: `Bearer ${accessToken}`,
+					},
+				}
+			)
+
+			if (!response.ok) {
+				throw new Error(`Failed to fetch calendars: ${response.statusText}`)
+			}
+
+			const data = await response.json()
+			const calendars: GoogleCalendar[] = data.items.map((item: GoogleCalendar) => ({
+				id: item.id,
+				summary: item.summary,
+				primary: item.primary,
+				backgroundColor: item.backgroundColor,
+			}))
+
+			setAvailableCalendars(calendars)
+		} catch (err) {
+			setMessage({
+				type: "error",
+				text: `Failed to fetch calendars: ${
+					err instanceof Error ? err.message : "Unknown error"
+				}`,
+			})
+		} finally {
+			setIsFetchingCalendars(false)
+		}
+	}, [accessToken])
+
+	const toggleCalendar = (calendarId: string) => {
+		const currentIds = calendarIds.split("\n").filter((id) => id.trim())
+		const isSelected = currentIds.includes(calendarId)
+
+		let newIds: string[]
+		if (isSelected) {
+			newIds = currentIds.filter((id) => id !== calendarId)
+		} else {
+			newIds = [...currentIds, calendarId]
+		}
+
+		const newValue = newIds.join("\n")
+		setCalendarIds(newValue)
+		saveSetting(CALENDAR_IDS_KEY, newValue, calendarIdsRecord)
+	}
+
+	const selectedCalendarIds = calendarIds.split("\n").filter((id) => id.trim())
 
 	const exchangeCodeForToken = useCallback(
 		async (code: string) => {
@@ -322,6 +408,121 @@ export function SettingsPage() {
 								)}
 							</div>
 						)}
+					</div>
+
+					<div className="bg-[#111213] border border-[#252525] rounded-lg p-6">
+						<h2 className="text-lg font-medium mb-4">Calendar Settings</h2>
+						<p className="text-sm text-[#888] mb-6">
+							Configure which calendars to sync and how far in advance to create tasks.
+						</p>
+
+						{!isAuthenticated && (
+							<div className="mb-6 p-3 rounded-md text-sm bg-yellow-900/30 text-yellow-400 border border-yellow-800 flex items-start gap-2">
+								<AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+								<span>
+									Please connect to Google Calendar above to enable these settings.
+									Once authenticated, you'll be able to select which calendars to use.
+								</span>
+							</div>
+						)}
+
+						<div className="space-y-4">
+							<div>
+								<div className="flex items-center justify-between mb-2">
+									<label className="block text-sm font-medium">
+										Calendars to Sync
+									</label>
+									{isAuthenticated && (
+										<button
+											onClick={fetchCalendars}
+											disabled={isFetchingCalendars}
+											className="flex items-center gap-1 px-2 py-1 text-xs bg-[#1e1e1e] border border-[#333] rounded-md text-[#888] hover:text-white hover:border-[#555] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+										>
+											<RefreshCw className={`w-3 h-3 ${isFetchingCalendars ? 'animate-spin' : ''}`} />
+											{isFetchingCalendars ? 'Fetching...' : 'Fetch Calendars'}
+										</button>
+									)}
+								</div>
+
+								{availableCalendars.length > 0 ? (
+									<div className="space-y-2 mb-2">
+										{availableCalendars.map((calendar) => {
+											const isSelected = selectedCalendarIds.includes(calendar.id)
+											return (
+												<button
+													key={calendar.id}
+													onClick={() => toggleCalendar(calendar.id)}
+													className={`w-full flex items-center gap-3 p-3 rounded-md border transition-colors text-left ${
+														isSelected
+															? 'bg-blue-900/30 border-blue-700 text-white'
+															: 'bg-[#1e1e1e] border-[#333] text-[#888] hover:text-white hover:border-[#555]'
+													}`}
+												>
+													<div
+														className="w-3 h-3 rounded-sm flex-shrink-0"
+														style={{ backgroundColor: calendar.backgroundColor || '#4285f4' }}
+													/>
+													<div className="flex-1 min-w-0">
+														<div className="font-medium truncate">
+															{calendar.summary}
+															{calendar.primary && (
+																<span className="ml-2 text-xs text-[#666]">(Primary)</span>
+															)}
+														</div>
+														<div className="text-xs text-[#555] truncate">{calendar.id}</div>
+													</div>
+													{isSelected && (
+														<Check className="w-4 h-4 text-blue-400 flex-shrink-0" />
+													)}
+												</button>
+											)
+										})}
+									</div>
+								) : (
+									<div className="mb-2">
+										<textarea
+											id="calendarIds"
+											value={calendarIds}
+											onChange={(e) => setCalendarIds(e.target.value)}
+											onBlur={handleCalendarIdsBlur}
+											disabled={!isAuthenticated}
+											rows={3}
+											className="w-full px-3 py-2 bg-[#1e1e1e] border border-[#333] rounded-md text-white placeholder-[#555] focus:outline-none focus:border-[#555] focus:ring-1 focus:ring-[#555] disabled:opacity-50 disabled:cursor-not-allowed"
+											placeholder="Enter calendar IDs (one per line) or click 'Fetch Calendars' to select from your calendars"
+										/>
+									</div>
+								)}
+								
+								<p className="text-xs text-[#666]">
+									{availableCalendars.length > 0
+										? `${selectedCalendarIds.length} calendar(s) selected`
+										: "Click 'Fetch Calendars' to see your available calendars, or enter calendar IDs manually (one per line)."}
+								</p>
+							</div>
+
+							<div>
+								<label
+									htmlFor="daysInAdvance"
+									className="block text-sm font-medium mb-2"
+								>
+									Days in Advance
+								</label>
+								<input
+									id="daysInAdvance"
+									type="number"
+									min="1"
+									max="365"
+									value={daysInAdvance}
+									onChange={(e) => setDaysInAdvance(e.target.value)}
+									onBlur={handleDaysInAdvanceBlur}
+									disabled={!isAuthenticated}
+									className="w-32 px-3 py-2 bg-[#1e1e1e] border border-[#333] rounded-md text-white placeholder-[#555] focus:outline-none focus:border-[#555] focus:ring-1 focus:ring-[#555] disabled:opacity-50 disabled:cursor-not-allowed"
+								/>
+								<p className="mt-1 text-xs text-[#666]">
+									How many days ahead to create tasks from calendar events. Default is 30 days.
+								</p>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
