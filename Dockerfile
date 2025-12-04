@@ -13,9 +13,10 @@ RUN wget https://github.com/pocketbase/pocketbase/releases/download/v${VERSION}/
 
 # Build frontends
 FROM oven/bun AS frontend_builder
+WORKDIR /app/
 
-COPY ./frontend /
-RUN bun install
+COPY ./frontend /app
+RUN bun install --frozen-lockfile
 RUN bun run build
 
 # Build final image
@@ -28,6 +29,6 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 
 COPY ./pb_migrations /pb_migrations
 COPY ./pb_hooks /pb_hooks
-COPY --from=frontend_builder /dist /pb_public
+COPY --from=frontend_builder /app/dist /pb_public
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
