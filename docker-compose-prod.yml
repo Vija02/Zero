@@ -1,6 +1,6 @@
 services:
   pocketbase:
-    image: ghcr.io/muchobien/pocketbase:latest
+    image: ghcr.io/vija02/zero:main
     container_name: zero
     restart: unless-stopped
     env_file: .env
