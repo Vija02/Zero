@@ -2,7 +2,7 @@ import type React from "react"
 import { useRef, useState, useCallback, MutableRefObject } from "react"
 import { Plus, Circle, CheckCircle2, RefreshCw } from "lucide-react"
 import { useTaskManager } from "./task-manager"
-import { format, isSameDay } from "date-fns"
+import { format, isSameDay, isToday } from "date-fns"
 import { usePbFullList } from "@/api/usePbQueries"
 import { TasksResponse } from "@/pocketbase-types"
 import { usePbMutations } from "@/api/usePbMutations"
@@ -322,12 +322,17 @@ function TaskCard({ task, day, index }: TaskCardProps) {
 		updateTask({ id: task.id, completed: !task.completed })
 	}
 
+	// Check if task is due today
+	const isDueToday = task.due_date && isToday(new Date(task.due_date))
+
 	return (
 		<div
 			ref={dragRef}
-			className={`bg-[#1a1a1a] rounded-md p-2.5 hover:bg-[#222] cursor-grab active:cursor-grabbing transition-all border border-transparent hover:border-[#333] ${
-				isDragging ? "opacity-50 scale-95" : ""
-			}`}
+			className={`bg-[#1a1a1a] rounded-md p-2.5 hover:bg-[#222] cursor-grab active:cursor-grabbing transition-all border ${
+				isDueToday && !task.completed
+					? "border-orange-500"
+					: "border-transparent hover:border-[#333]"
+			} ${isDragging ? "opacity-50 scale-95" : ""}`}
 			onClick={() => openTaskDetail(task.id)}
 		>
 			{/* {task.scheduledTime && (

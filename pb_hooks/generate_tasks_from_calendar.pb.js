@@ -105,6 +105,7 @@ cronAdd("generate_tasks_from_calendar", "0 * * * *", () => {
 		// Helper function to parse task block from description
 		// Format: @@task Nd (where N is number of days before event)
 		//         @title Custom Title (optional)
+		//         @due Nd (optional - N days before event for due date)
 		function parseTaskBlock(rawDescription) {
 			function htmlToPlainText(html) {
 				return html
@@ -135,9 +136,14 @@ cronAdd("generate_tasks_from_calendar", "0 * * * *", () => {
 			const titleMatch = description.match(/@title\s+(.+?)(?:\n|$)/i)
 			const title = titleMatch ? titleMatch[1].trim() : null
 
+			// Look for @due attribute (optional - N days before event)
+			const dueMatch = description.match(/@due\s+(\d+)d/i)
+			const daysBeforeDue = dueMatch ? parseInt(dueMatch[1], 10) : null
+
 			return {
 				daysBefore: daysBefore,
 				title: title,
+				daysBeforeDue: daysBeforeDue,
 			}
 		}
 
@@ -205,6 +211,10 @@ cronAdd("generate_tasks_from_calendar", "0 * * * *", () => {
 				event.start,
 				taskBlock.daysBefore,
 			)
+			// Calculate due date if @due was specified, otherwise leave blank
+			const dueDate = taskBlock.daysBeforeDue !== null
+				? calculateAllocatedDate(event.start, taskBlock.daysBeforeDue)
+				: null
 			// Use custom title from @title attribute, or fall back to event summary
 			const taskTitle = taskBlock.title || event.summary
 
@@ -220,38 +230,44 @@ cronAdd("generate_tasks_from_calendar", "0 * * * *", () => {
 			}
 
 			if (existingTask) {
-				// Update existing task if allocated_date or title changed
+				// Update existing task if allocated_date, title, or due_date changed
 				const currentAllocatedDate = new Date(
 					existingTask.get("allocated_date"),
 				).toISOString()
 				const currentTitle = existingTask.get("title")
+				const currentDueDate = existingTask.get("due_date")
 				const newAllocatedDateNormalized = allocatedDate.split("T")[0]
 				const currentAllocatedDateNormalized = currentAllocatedDate
 					? currentAllocatedDate.split("T")[0]
 					: ""
+				const newDueDateNormalized = dueDate ? dueDate.split("T")[0] : ""
+				const currentDueDateNormalized = currentDueDate
+					? new Date(currentDueDate).toISOString().split("T")[0]
+					: ""
 
 				const needsUpdate =
 					currentAllocatedDateNormalized !== newAllocatedDateNormalized ||
-					currentTitle !== taskTitle
+					currentTitle !== taskTitle ||
+					currentDueDateNormalized !== newDueDateNormalized
 
 				if (needsUpdate) {
 					console.log(
-						`Updating task "${taskTitle}" - allocated_date: ${currentAllocatedDateNormalized} -> ${newAllocatedDateNormalized}, title: ${currentTitle} -> ${taskTitle}`,
+						`Updating task "${taskTitle}" - allocated_date: ${currentAllocatedDateNormalized} -> ${newAllocatedDateNormalized}, title: ${currentTitle} -> ${taskTitle}, due_date: ${currentDueDateNormalized} -> ${newDueDateNormalized}`,
 					)
 					existingTask.set("allocated_date", allocatedDate)
 					existingTask.set("title", taskTitle)
-					existingTask.set("due_date", event.start)
+					existingTask.set("due_date", dueDate)
 					$app.save(existingTask)
 				}
 			} else {
 				// Create new task
-				console.log(`Creating new task "${taskTitle}" for ${allocatedDate}`)
+				console.log(`Creating new task "${taskTitle}" for ${allocatedDate}${dueDate ? `, due: ${dueDate.split("T")[0]}` : ""}`)
 				const collection = $app.findCollectionByNameOrId("tasks")
 				const newTask = new Record(collection)
 				newTask.set("title", taskTitle)
 				newTask.set("google_calendar_id", event.id)
 				newTask.set("allocated_date", allocatedDate)
-				newTask.set("due_date", event.start)
+				newTask.set("due_date", dueDate)
 				newTask.set("completed", false)
 				$app.save(newTask)
 			}
