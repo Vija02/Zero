@@ -8,9 +8,9 @@ import { PocketBaseProvider } from "use-pocketbase"
 import { DndProvider } from "react-dnd"
 import { HTML5Backend } from "react-dnd-html5-backend"
 import { BacklogPanel } from "./components/backlog-panel"
-import { TaskDetailModal } from "./components/task-detail-modal"
-import { AddTaskModal } from "./components/add-task-modal"
-import { ActiveTaskBar } from "./components/active-task-bar"
+import { TaskDetailModal } from "./components/modal/task-detail-modal"
+import { AddTaskModal } from "./components/modal/add-task-modal"
+import { ActiveTaskBar } from "./components/modal/active-task-bar"
 import { useBacklogStore } from "./stores/useBacklogStore"
 import { useTaskDetailStore } from "./stores/useTaskDetailStore"
 import { useAddTaskStore } from "./stores/useAddTaskStore"
@@ -30,18 +30,18 @@ function App() {
 		>
 			<DndProvider backend={HTML5Backend}>
 				<div className="flex h-screen bg-[#131314] text-[#e6e6e6] overflow-hidden">
-				<BrowserRouter>
-					<Routes>
-						<Route path="/login" element={<LoginPage />} />
-						<Route element={<ProtectedRoute />}>
-							<Route path="/dashboard" element={<DashboardPage />} />
-							<Route path="/settings" element={<SettingsPage />} />
-							<Route path="/calendar" element={<CalendarPage />} />
-						</Route>
-						<Route path="/" element={<Navigate to="/dashboard" replace />} />
-						<Route path="*" element={<Navigate to="/dashboard" replace />} />
-					</Routes>
-				</BrowserRouter>
+					<BrowserRouter>
+						<Routes>
+							<Route path="/login" element={<LoginPage />} />
+							<Route element={<ProtectedRoute />}>
+								<Route path="/dashboard" element={<DashboardPage />} />
+								<Route path="/settings" element={<SettingsPage />} />
+								<Route path="/calendar" element={<CalendarPage />} />
+							</Route>
+							<Route path="/" element={<Navigate to="/dashboard" replace />} />
+							<Route path="*" element={<Navigate to="/dashboard" replace />} />
+						</Routes>
+					</BrowserRouter>
 					{showBacklog && <BacklogPanel />}
 
 					{selectedTaskId && (
