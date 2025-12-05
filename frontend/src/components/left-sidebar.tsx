@@ -3,32 +3,35 @@
 import { usePocketBase } from "@/api/usePocketBase"
 import {
 	Archive,
-	ChevronDown,
+	Calendar,
 	Home,
-	ListTodo,
 	LogOut,
 	Settings,
-	Target,
 	X,
 } from "lucide-react"
-import { useNavigate } from "react-router-dom"
-import { useTaskManager } from "./task-manager"
-
-const mainNavItems = [
-	{ icon: Home, label: "Home", active: true },
-	{ icon: ListTodo, label: "Today" },
-	{ icon: Target, label: "Focus" },
-]
+import { useNavigate, useLocation } from "react-router-dom"
+import { useSidebarStore } from "@/stores/useSidebarStore"
+import { useBacklogStore } from "@/stores/useBacklogStore"
 
 export function LeftSidebar() {
-	const { showBacklog, toggleBacklog, sidebarOpen, toggleSidebar } =
-		useTaskManager()
+	const { sidebarOpen, toggleSidebar, setSidebarOpen } = useSidebarStore()
+	const { showBacklog, toggleBacklog } = useBacklogStore()
 
 	const pb = usePocketBase()
 	const navigate = useNavigate()
+	const location = useLocation()
+
+	const isOnDashboard = location.pathname === "/dashboard" || location.pathname === "/"
+	const isOnCalendar = location.pathname === "/calendar"
+
+	const handleNavigate = (path: string) => {
+		navigate(path)
+		setSidebarOpen(false)
+	}
 
 	const handleLogout = () => {
 		pb.authStore.clear()
+		setSidebarOpen(false)
 	}
 
 	return (
@@ -50,13 +53,13 @@ export function LeftSidebar() {
         `}
 			>
 				<div className="p-3 flex items-center justify-between">
-					<button className="flex items-center gap-1 text-white font-medium text-sm transition-colors">
+					<div className="flex items-center gap-1.5 text-white font-medium text-sm">
+						<img src="/icon.svg" alt="Zero" className="w-5 h-5" />
 						Zero
-						<ChevronDown className="w-3 h-3 ml-1" />
-					</button>
+					</div>
 					<button
 						onClick={toggleSidebar}
-						className="md:hidden p-1 hover:bg-[#252525] rounded transition-colors"
+						className="md:hidden p-1 hover:bg-[#252525] rounded transition-colors cursor-pointer"
 					>
 						<X className="w-4 h-4" />
 					</button>
@@ -64,19 +67,17 @@ export function LeftSidebar() {
 
 				<nav className="flex-1 px-2">
 					<div className="space-y-0.5">
-						{mainNavItems.map((item) => (
-							<button
-								key={item.label}
-								className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors cursor-pointer ${
-									item.active
-										? "bg-[#252525] text-[#e6e6e6]"
-										: "text-[#888] hover:bg-[#1e1e1e] hover:text-[#e6e6e6]"
-								}`}
-							>
-								<item.icon className="w-4 h-4" />
-								{item.label}
-							</button>
-						))}
+						<button
+							onClick={() => handleNavigate("/dashboard")}
+							className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors cursor-pointer ${
+								isOnDashboard
+									? "bg-[#252525] text-[#e6e6e6]"
+									: "text-[#888] hover:bg-[#1e1e1e] hover:text-[#e6e6e6]"
+							}`}
+						>
+							<Home className="w-4 h-4" />
+							Home
+						</button>
 					</div>
 
 					<div className="mt-6">
@@ -84,6 +85,17 @@ export function LeftSidebar() {
 							Planning
 						</div>
 						<div className="space-y-0.5 mt-1">
+							<button
+								onClick={() => handleNavigate("/calendar")}
+								className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors cursor-pointer ${
+									isOnCalendar
+										? "bg-[#252525] text-[#e6e6e6]"
+										: "text-[#888] hover:bg-[#1e1e1e] hover:text-[#e6e6e6]"
+								}`}
+							>
+								<Calendar className="w-4 h-4" />
+								Calendar
+							</button>
 							<button
 								onClick={toggleBacklog}
 								className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors cursor-pointer ${
@@ -101,7 +113,7 @@ export function LeftSidebar() {
 				<nav className="px-2 pb-2">
 					<div className="space-y-0.5 mt-1">
 						<button
-							onClick={() => navigate("/settings")}
+							onClick={() => handleNavigate("/settings")}
 							className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors cursor-pointer text-[#888] hover:bg-[#1e1e1e] hover:text-[#e6e6e6]"
 						>
 							<Settings className="w-4 h-4" />

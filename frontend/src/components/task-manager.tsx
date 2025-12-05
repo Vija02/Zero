@@ -1,17 +1,16 @@
 import {
-	useState,
 	createContext,
+	useCallback,
 	useContext,
 	useEffect,
-	useCallback,
 	useRef,
+	useState,
 } from "react"
-import { LeftSidebar } from "./left-sidebar"
-import { WeeklyView } from "./weekly-view"
-import { BacklogPanel } from "./backlog-panel"
-import { TaskDetailModal } from "./task-detail-modal"
-import { AddTaskModal } from "./add-task-modal"
 import { ActiveTaskBar } from "./active-task-bar"
+import { AddTaskModal } from "./add-task-modal"
+import { LeftSidebar } from "./left-sidebar"
+import { TaskDetailModal } from "./task-detail-modal"
+import { WeeklyView } from "./weekly-view"
 
 export interface Task {
 	id: string
@@ -36,12 +35,8 @@ interface TaskManagerContextType {
 	// setTasks: React.Dispatch<React.SetStateAction<Record<string, Task[]>>>
 	// toggleTaskComplete: (dayKey: string, taskId: string) => void
 	openTaskDetail: (taskId: string) => void
-	showBacklog: boolean
-	toggleBacklog: () => void
 	openAddTask: (day: Date) => void
 	isMobile: boolean
-	sidebarOpen: boolean
-	toggleSidebar: () => void
 	activeTask: { task: Task; dayKey: string } | null
 	startTask: (task: Task, dayKey: string) => void
 	stopTask: () => void
@@ -60,9 +55,7 @@ export const useTaskManager = () => {
 
 export function TaskManager() {
 	const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
-	const [showBacklog, setShowBacklog] = useState(false)
 	const [addTaskDay, setAddTaskDay] = useState<Date | null>(null)
-	const [sidebarOpen, setSidebarOpen] = useState(false)
 	const [isMobile, setIsMobile] = useState(false)
 	const [activeTask, setActiveTask] = useState<{
 		task: Task
@@ -99,16 +92,8 @@ export function TaskManager() {
 		setSelectedTaskId(taskId)
 	}, [])
 
-	const toggleBacklog = useCallback(() => {
-		setShowBacklog((prev) => !prev)
-	}, [])
-
 	const openAddTask = useCallback((day: Date) => {
 		setAddTaskDay(day)
-	}, [])
-
-	const toggleSidebar = useCallback(() => {
-		setSidebarOpen((prev) => !prev)
 	}, [])
 
 	const startTask = useCallback((task: Task, dayKey: string) => {
@@ -136,37 +121,30 @@ export function TaskManager() {
 				// setTasks,
 				// toggleTaskComplete,
 				openTaskDetail,
-				showBacklog,
-				toggleBacklog,
 				openAddTask,
 				isMobile,
-				sidebarOpen,
-				toggleSidebar,
 				activeTask,
 				startTask,
 				stopTask,
 				elapsedTime,
 			}}
 		>
-			<div className="flex h-screen bg-[#131314] text-[#e6e6e6] overflow-hidden">
-				<LeftSidebar />
-				<main className="flex flex-1 overflow-hidden">
-					<WeeklyView />
-					{showBacklog && <BacklogPanel />}
-				</main>
+			<LeftSidebar />
+			<main className="flex flex-1 overflow-hidden">
+				<WeeklyView />
+			</main>
 
-				{selectedTaskId && (
-					<TaskDetailModal
-						taskId={selectedTaskId}
-						onClose={() => setSelectedTaskId(null)}
-					/>
-				)}
-				{addTaskDay && (
-					<AddTaskModal day={addTaskDay} onClose={() => setAddTaskDay(null)} />
-				)}
+			{selectedTaskId && (
+				<TaskDetailModal
+					taskId={selectedTaskId}
+					onClose={() => setSelectedTaskId(null)}
+				/>
+			)}
+			{addTaskDay && (
+				<AddTaskModal day={addTaskDay} onClose={() => setAddTaskDay(null)} />
+			)}
 
-				{activeTask && <ActiveTaskBar />}
-			</div>
+			{activeTask && <ActiveTaskBar />}
 		</TaskManagerContext.Provider>
 	)
 }

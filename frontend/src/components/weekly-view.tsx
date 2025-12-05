@@ -10,10 +10,10 @@ import {
 } from "lucide-react"
 import { useCallback, useMemo, useState } from "react"
 import { DayColumn } from "./day-column"
-import { useTaskManager } from "./task-manager"
+import { useSidebarStore } from "@/stores/useSidebarStore"
 
 export function WeeklyView() {
-	const { toggleSidebar } = useTaskManager()
+	const { toggleSidebar } = useSidebarStore()
 	const [selectedDate, setSelectedDate] = useState(startOfDay(new Date()))
 
 	const width = useWindowWidth()
