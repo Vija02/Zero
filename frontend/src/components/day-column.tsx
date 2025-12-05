@@ -383,9 +383,9 @@ function TaskCard({ task, day, index }: TaskCardProps) {
 							className="flex-shrink-0 hover:scale-110 transition-transform cursor-pointer"
 						>
 							{task.completed ? (
-								<CheckCircle2 className="w-4 h-4 text-[#22c55e]" />
+								<CheckCircle2 className="w-5 h-5 text-[#22c55e]" />
 							) : (
-								<Circle className="w-4 h-4 text-[#444] hover:text-[#666]" />
+								<Circle className="w-5 h-5 text-[#444] hover:text-[#666]" />
 							)}
 						</button>
 						{task.carry_over > 0 && (
