@@ -8,10 +8,19 @@ import { PocketBaseProvider } from "use-pocketbase"
 import { DndProvider } from "react-dnd"
 import { HTML5Backend } from "react-dnd-html5-backend"
 import { BacklogPanel } from "./components/backlog-panel"
+import { TaskDetailModal } from "./components/task-detail-modal"
+import { AddTaskModal } from "./components/add-task-modal"
+import { ActiveTaskBar } from "./components/active-task-bar"
 import { useBacklogStore } from "./stores/useBacklogStore"
+import { useTaskDetailStore } from "./stores/useTaskDetailStore"
+import { useAddTaskStore } from "./stores/useAddTaskStore"
+import { useActiveTaskStore } from "./stores/useActiveTaskStore"
 
 function App() {
 	const { showBacklog } = useBacklogStore()
+	const { selectedTaskId, closeTaskDetail } = useTaskDetailStore()
+	const { addTaskDay, closeAddTask } = useAddTaskStore()
+	const { activeTask } = useActiveTaskStore()
 
 	return (
 		<PocketBaseProvider
@@ -34,6 +43,17 @@ function App() {
 					</Routes>
 				</BrowserRouter>
 					{showBacklog && <BacklogPanel />}
+
+					{selectedTaskId && (
+						<TaskDetailModal
+							taskId={selectedTaskId}
+							onClose={closeTaskDetail}
+						/>
+					)}
+					{addTaskDay && (
+						<AddTaskModal day={addTaskDay} onClose={closeAddTask} />
+					)}
+					{activeTask && <ActiveTaskBar />}
 				</div>
 			</DndProvider>
 		</PocketBaseProvider>

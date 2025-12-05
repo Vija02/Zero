@@ -1,7 +1,8 @@
 import type React from "react"
 import { useRef, useState, useCallback, MutableRefObject } from "react"
 import { Plus, Circle, CheckCircle2, RefreshCw } from "lucide-react"
-import { useTaskManager } from "./task-manager"
+import { useAddTaskStore } from "@/stores/useAddTaskStore"
+import { useTaskDetailStore } from "@/stores/useTaskDetailStore"
 import { format, isSameDay, isToday } from "date-fns"
 import { usePbFullList } from "@/api/usePbQueries"
 import { TasksResponse } from "@/pocketbase-types"
@@ -53,7 +54,7 @@ interface DayColumnProps {
 const totalTime = "10:00"
 
 export function DayColumn({ day, progress }: DayColumnProps) {
-	const { openAddTask } = useTaskManager()
+	const { openAddTask } = useAddTaskStore()
 
 	const { data } = usePbFullList("tasks")
 	const currentDayData = data?.filter((x) => isSameDay(x.allocated_date, day))
@@ -296,7 +297,7 @@ interface TaskCardProps {
 }
 
 function TaskCard({ task, day, index }: TaskCardProps) {
-	const { openTaskDetail } = useTaskManager()
+	const { openTaskDetail } = useTaskDetailStore()
 	const tagColor = "#666"
 
 	const {

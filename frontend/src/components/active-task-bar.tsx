@@ -1,7 +1,7 @@
 "use client"
 
 import { Square } from "lucide-react"
-import { useTaskManager } from "./task-manager"
+import { useActiveTaskStore } from "@/stores/useActiveTaskStore"
 
 const tagColors: Record<string, string> = {
   Church: "#6366f1",
@@ -10,7 +10,7 @@ const tagColors: Record<string, string> = {
 }
 
 export function ActiveTaskBar() {
-  const { activeTask, stopTask, elapsedTime } = useTaskManager()
+  const { activeTask, stopTask, elapsedTime } = useActiveTaskStore()
 
   if (!activeTask) return null
 
