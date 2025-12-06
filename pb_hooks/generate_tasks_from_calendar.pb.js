@@ -154,6 +154,15 @@ cronAdd("generate_tasks_from_calendar", "*/30 * * * *", () => {
 			)
 			// Set to start of day
 			allocatedDate.setHours(0, 0, 0, 0)
+			
+			// Clamp to today if allocated date is in the past
+			const today = new Date()
+			today.setHours(0, 0, 0, 0)
+			
+			if (allocatedDate < today) {
+				return today.toISOString()
+			}
+			
 			return allocatedDate.toISOString()
 		}
 
