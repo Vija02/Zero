@@ -10,6 +10,7 @@ import {
 	CalendarEvent,
 } from "@/api/useGoogleCalendarEvents"
 import { useNavigate } from "react-router-dom"
+import { CalendarEventModal } from "@/components/modal/calendar-event-modal"
 import "react-big-calendar/lib/css/react-big-calendar.css"
 
 // Setup date-fns localizer for react-big-calendar
@@ -30,6 +31,7 @@ export function CalendarPage() {
 	const navigate = useNavigate()
 	const [currentDate, setCurrentDate] = useState(new Date())
 	const [view, setView] = useState<View>("week")
+	const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
 
 	const { events, isLoading, isAuthenticated, error } = useGoogleCalendarEvents(
 		{
@@ -46,9 +48,11 @@ export function CalendarPage() {
 	}, [])
 
 	const handleSelectEvent = useCallback((event: CalendarEvent) => {
-		if (event.htmlLink) {
-			window.open(event.htmlLink, "_blank")
-		}
+		setSelectedEvent(event)
+	}, [])
+
+	const handleCloseEventModal = useCallback(() => {
+		setSelectedEvent(null)
 	}, [])
 
 	// Custom event styling
@@ -57,13 +61,14 @@ export function CalendarPage() {
 		const isPastEvent = event.end < now
 
 		const hasTask = event.description?.includes("@@task")
+		const isIgnored = event.description?.includes("@@ignore")
 
 		const style: React.CSSProperties = {
 			backgroundColor: isPastEvent ? "#64748b" : "#3b82f6",
 			borderRadius: "4px",
 			opacity: isPastEvent ? 0.5 : 0.9,
 			color: isPastEvent ? "#cbd5e1" : "white",
-			border: !isPastEvent && !hasTask ? "3px solid red" : "none",
+			border: !isIgnored && !isPastEvent && !hasTask ? "3px solid red" : "none",
 			display: "block",
 			fontSize: "12px",
 		}
@@ -90,6 +95,12 @@ export function CalendarPage() {
 	return (
 		<>
 			<LeftSidebar />
+			{selectedEvent && (
+				<CalendarEventModal
+					event={selectedEvent}
+					onClose={handleCloseEventModal}
+				/>
+			)}
 			<main className="flex-1 flex flex-col overflow-hidden">
 				<header className="h-12 flex items-center px-2 sm:px-4 border-b border-[#252525] bg-[#121212]">
 					<button
