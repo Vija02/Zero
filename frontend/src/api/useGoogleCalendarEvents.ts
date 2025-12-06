@@ -118,7 +118,6 @@ export function useGoogleCalendarEvents(
 					start,
 					end,
 					description: event.description,
-					htmlLink: event.htmlLink,
 					allDay: isAllDay,
 				}
 			})

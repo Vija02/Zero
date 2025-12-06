@@ -5,7 +5,10 @@ import { format, parse, startOfWeek, getDay } from "date-fns"
 import { enGB } from "date-fns/locale"
 import { LeftSidebar } from "@/components/left-sidebar"
 import { useSidebarStore } from "@/stores/useSidebarStore"
-import { useGoogleCalendarEvents, CalendarEvent } from "@/api/useGoogleCalendarEvents"
+import {
+	useGoogleCalendarEvents,
+	CalendarEvent,
+} from "@/api/useGoogleCalendarEvents"
 import { useNavigate } from "react-router-dom"
 import "react-big-calendar/lib/css/react-big-calendar.css"
 
@@ -28,9 +31,11 @@ export function CalendarPage() {
 	const [currentDate, setCurrentDate] = useState(new Date())
 	const [view, setView] = useState<View>("week")
 
-	const { events, isLoading, isAuthenticated, error } = useGoogleCalendarEvents({
-		currentDate,
-	})
+	const { events, isLoading, isAuthenticated, error } = useGoogleCalendarEvents(
+		{
+			currentDate,
+		},
+	)
 
 	const handleNavigate = useCallback((newDate: Date) => {
 		setCurrentDate(newDate)
@@ -48,18 +53,23 @@ export function CalendarPage() {
 
 	// Custom event styling
 	const eventStyleGetter = useCallback((event: CalendarEvent) => {
+		const now = new Date()
+		const isPastEvent = event.end < now
+
+		const hasTask = event.description?.includes("@@task")
+
 		const style: React.CSSProperties = {
-			backgroundColor: "#3b82f6",
+			backgroundColor: isPastEvent ? "#64748b" : "#3b82f6",
 			borderRadius: "4px",
-			opacity: 0.9,
-			color: "white",
-			border: "none",
+			opacity: isPastEvent ? 0.5 : 0.9,
+			color: isPastEvent ? "#cbd5e1" : "white",
+			border: !isPastEvent && !hasTask ? "3px solid red" : "none",
 			display: "block",
 			fontSize: "12px",
 		}
 
 		if (event.allDay) {
-			style.backgroundColor = "#6366f1"
+			style.backgroundColor = isPastEvent ? "#64748b" : "#6366f1"
 		}
 
 		return { style }
@@ -69,8 +79,7 @@ export function CalendarPage() {
 	const formats = useMemo(
 		() => ({
 			timeGutterFormat: (date: Date) => format(date, "HH:mm"),
-			eventTimeRangeFormat: ({ start, end }: { start: Date; end: Date }) =>
-				`${format(start, "HH:mm")} - ${format(end, "HH:mm")}`,
+			eventTimeRangeFormat: () => ``,
 			dayHeaderFormat: (date: Date) => format(date, "EEE dd/MM"),
 			dayRangeHeaderFormat: ({ start, end }: { start: Date; end: Date }) =>
 				`${format(start, "dd MMM")} - ${format(end, "dd MMM yyyy")}`,
@@ -145,7 +154,14 @@ export function CalendarPage() {
 								events={events}
 								startAccessor="start"
 								endAccessor="end"
-								titleAccessor="title"
+								// @ts-expect-error -- Expected
+								titleAccessor={(ev) => {
+									return (
+										<span>
+											{ev.title}, {format(ev.start, "HH:mm")}
+										</span>
+									)
+								}}
 								view={view}
 								onView={handleViewChange}
 								date={currentDate}
@@ -157,8 +173,8 @@ export function CalendarPage() {
 								views={["week", "day", "month"]}
 								step={30}
 								timeslots={2}
-								min={new Date(1970, 1, 1, 6, 0, 0)}
-								max={new Date(1970, 1, 1, 22, 0, 0)}
+								min={new Date(1970, 1, 1, 9, 0, 0)}
+								max={new Date(1970, 1, 1, 23, 0, 0)}
 								style={{ height: "100%" }}
 							/>
 						</div>
