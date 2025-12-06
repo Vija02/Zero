@@ -97,10 +97,76 @@ export function TaskDetailModal({ taskId, onClose }: TaskDetailModalProps) {
 	// }
 
 	if (isLoading) {
-		return <p>Loading...</p>
+		return (
+			<div
+				className="fixed inset-0 z-50 flex items-start justify-center pt-12 px-4"
+				onClick={onClose}
+			>
+				<div className="absolute inset-0 bg-black/60" />
+				<div
+					className="relative w-full max-w-[540px] bg-[#1e1e1e] rounded-lg shadow-2xl border border-[#333] overflow-hidden"
+					onClick={(e) => e.stopPropagation()}
+				>
+					<div className="flex items-center justify-between px-4 py-2.5 border-b border-[#333] bg-[#1a1a1a]">
+						<div className="flex items-center gap-2">
+							<div className="h-4 w-16 bg-[#333] rounded animate-pulse" />
+						</div>
+						<button
+							className="p-1 text-[#666] hover:text-[#e6e6e6] hover:bg-[#333] rounded"
+							onClick={onClose}
+						>
+							<X className="w-4 h-4" />
+						</button>
+					</div>
+					<div className="px-4 py-8 flex flex-col items-center justify-center">
+						<div className="w-8 h-8 border-2 border-[#333] border-t-[#666] rounded-full animate-spin mb-4" />
+						<p className="text-[#888] text-sm">Loading task...</p>
+					</div>
+				</div>
+			</div>
+		)
 	}
+	
 	if (!task) {
-		return <p>ERROR</p>
+		return (
+			<div
+				className="fixed inset-0 z-50 flex items-start justify-center pt-12 px-4"
+				onClick={onClose}
+			>
+				<div className="absolute inset-0 bg-black/60" />
+				<div
+					className="relative w-full max-w-[540px] bg-[#1e1e1e] rounded-lg shadow-2xl border border-[#333] overflow-hidden"
+					onClick={(e) => e.stopPropagation()}
+				>
+					<div className="flex items-center justify-between px-4 py-2.5 border-b border-[#333] bg-[#1a1a1a]">
+						<div className="flex items-center gap-2">
+							<span className="text-sm text-[#666]">Error</span>
+						</div>
+						<button
+							className="p-1 text-[#666] hover:text-[#e6e6e6] hover:bg-[#333] rounded"
+							onClick={onClose}
+						>
+							<X className="w-4 h-4" />
+						</button>
+					</div>
+					<div className="px-4 py-8 flex flex-col items-center justify-center">
+						<div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center mb-4">
+							<X className="w-6 h-6 text-red-500" />
+						</div>
+						<h3 className="text-[#e6e6e6] font-medium mb-2">Task not found</h3>
+						<p className="text-[#888] text-sm text-center mb-6">
+							The task you're looking for doesn't exist or couldn't be loaded.
+						</p>
+						<button
+							onClick={onClose}
+							className="px-4 py-2 bg-[#333] hover:bg-[#444] text-[#e6e6e6] rounded transition-colors"
+						>
+							Close
+						</button>
+					</div>
+				</div>
+			</div>
+		)
 	}
 
 	return (
