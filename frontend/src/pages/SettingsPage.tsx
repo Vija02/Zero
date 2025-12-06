@@ -271,7 +271,7 @@ export function SettingsPage() {
 		}
 
 		const scope = encodeURIComponent(
-			"https://www.googleapis.com/auth/calendar.readonly",
+			"https://www.googleapis.com/auth/calendar",
 		)
 		const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(
 			clientId,
