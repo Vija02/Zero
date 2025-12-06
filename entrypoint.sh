@@ -6,7 +6,7 @@ HOST=${PB_HOST:-0.0.0.0}
 PORT=${PB_PORT:-8090}
 
 # Default serve command arguments
-DEFAULT_SERVE_ARGS="serve --http=${HOST}:${PORT} --dir=/pb_data --publicDir=/pb_public --hooksDir=/pb_hooks"
+DEFAULT_SERVE_ARGS="serve --http=${HOST}:${PORT} --dir=/pb_data --publicDir=/pb_public --hooksDir=/pb_hooks --encryptionEnv=PB_ENCRYPTION_KEY"
 
 # Function to create superuser if environment variables are set
 create_superuser() {

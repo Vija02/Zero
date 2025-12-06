@@ -8,8 +8,6 @@ services:
       - caddy
     volumes:
       - ./pb_data:/pb_data
-    # Optional: Add encryption flag if using ENCRYPTION env var
-    command: ["--encryptionEnv", "ENCRYPTION"]
     healthcheck:
       test:
         [
