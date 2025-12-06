@@ -99,12 +99,12 @@ export function TaskDetailModal({ taskId, onClose }: TaskDetailModalProps) {
 	if (isLoading) {
 		return (
 			<div
-				className="fixed inset-0 z-50 flex items-start justify-center pt-12 px-4"
+				className="fixed inset-0 z-50 flex items-center justify-center px-4"
 				onClick={onClose}
 			>
 				<div className="absolute inset-0 bg-black/60" />
 				<div
-					className="relative w-full max-w-[540px] bg-[#1e1e1e] rounded-lg shadow-2xl border border-[#333] overflow-hidden"
+					className="relative w-full max-w-[540px] h-[85vh] sm:h-[70vh] bg-[#1e1e1e] rounded-lg shadow-2xl border border-[#333] overflow-hidden flex flex-col"
 					onClick={(e) => e.stopPropagation()}
 				>
 					<div className="flex items-center justify-between px-4 py-2.5 border-b border-[#333] bg-[#1a1a1a]">
@@ -130,12 +130,12 @@ export function TaskDetailModal({ taskId, onClose }: TaskDetailModalProps) {
 	if (!task) {
 		return (
 			<div
-				className="fixed inset-0 z-50 flex items-start justify-center pt-12 px-4"
+				className="fixed inset-0 z-50 flex items-center justify-center px-4"
 				onClick={onClose}
 			>
 				<div className="absolute inset-0 bg-black/60" />
 				<div
-					className="relative w-full max-w-[540px] bg-[#1e1e1e] rounded-lg shadow-2xl border border-[#333] overflow-hidden"
+					className="relative w-full max-w-[540px] h-[85vh] sm:h-[70vh] bg-[#1e1e1e] rounded-lg shadow-2xl border border-[#333] overflow-hidden flex flex-col"
 					onClick={(e) => e.stopPropagation()}
 				>
 					<div className="flex items-center justify-between px-4 py-2.5 border-b border-[#333] bg-[#1a1a1a]">
@@ -171,12 +171,12 @@ export function TaskDetailModal({ taskId, onClose }: TaskDetailModalProps) {
 
 	return (
 		<div
-			className="fixed inset-0 z-50 flex items-start justify-center pt-12 px-4"
+			className="fixed inset-0 z-50 flex items-center justify-center px-4"
 			onClick={onClose}
 		>
 			<div className="absolute inset-0 bg-black/60" />
 			<div
-				className="relative w-full max-w-[540px] bg-[#1e1e1e] rounded-lg shadow-2xl border border-[#333] overflow-hidden"
+				className="relative w-full max-w-[540px] h-[85vh] sm:h-[70vh] bg-[#1e1e1e] rounded-lg shadow-2xl border border-[#333] overflow-hidden flex flex-col"
 				onClick={(e) => e.stopPropagation()}
 			>
 				{/* Header */}
@@ -277,14 +277,14 @@ export function TaskDetailModal({ taskId, onClose }: TaskDetailModalProps) {
 				</div>
 
 				{/* Notes section */}
-				<div className="px-4 py-3 border-b border-[#333]">
+				<div className="px-4 py-3 border-b border-[#333] flex-1 overflow-hidden">
 					<Textarea
 						value={description}
 						onChange={(e) => setDescription(e.target.value)}
 						onBlur={handleDescriptionBlur}
 						onKeyDown={handleDescriptionKeyDown}
 						placeholder="Notes..."
-						className="w-full h-[120px] bg-transparent text-sm text-[#888] placeholder-[#555] border-none px-0 resize-none focus-visible:ring-0 focus-visible:ring-offset-0"
+						className="w-full h-full bg-transparent text-sm text-[#888] placeholder-[#555] border-none px-0 resize-none focus-visible:ring-0 focus-visible:ring-offset-0 overflow-y-auto"
 					/>
 				</div>
 
