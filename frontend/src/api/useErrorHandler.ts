@@ -14,10 +14,13 @@ export function useErrorHandler() {
 
 		const originalSend = pb.send.bind(pb)
 
-		pb.send = async function (path: string, reqConfig: unknown) {
+		pb.send = async function <T = unknown>(
+			path: string,
+			options: unknown,
+		): Promise<T> {
 			try {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				return await originalSend(path, reqConfig as any)
+				return await originalSend(path, options as any)
 			} catch (error: unknown) {
 				// Check if this is a 500 error
 				const err = error as {
@@ -25,7 +28,7 @@ export function useErrorHandler() {
 					response?: { status?: number; message?: string }
 					message?: string
 				}
-				console.log(err.status)
+
 				if (err?.status === 500 || err?.response?.status === 500) {
 					const errorMessage =
 						err?.message ||
@@ -36,9 +39,10 @@ export function useErrorHandler() {
 					handleServerError(`${err.message} Request not sent`)
 				} else if (err.status === 403 || err?.response?.status === 403) {
 					handleLogout()
-					return
 				} else if (err.status === 400 || err?.response?.status === 400) {
 					handleServerError(`Error 400. ${err.message}`)
+				} else {
+					handleServerError(`Unhandled error. ${err.message}`)
 				}
 
 				// Re-throw the error so normal error handling continues
