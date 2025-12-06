@@ -15,6 +15,15 @@ import { useBacklogStore } from "./stores/useBacklogStore"
 import { useTaskDetailStore } from "./stores/useTaskDetailStore"
 import { useAddTaskStore } from "./stores/useAddTaskStore"
 import { useActiveTaskStore } from "./stores/useActiveTaskStore"
+import { useErrorHandler } from "./api/useErrorHandler"
+import { ToastContainer } from "react-toastify"
+import "react-toastify/dist/ReactToastify.css"
+
+function ErrorHandler() {
+	useErrorHandler()
+
+	return null
+}
 
 function App() {
 	const { showBacklog } = useBacklogStore()
@@ -28,6 +37,7 @@ function App() {
 				import.meta.env.DEV ? "http://localhost:8090" : window.location.origin
 			}
 		>
+			<ErrorHandler />
 			<DndProvider backend={HTML5Backend}>
 				<div className="flex h-screen bg-[#131314] text-[#e6e6e6] overflow-hidden">
 					<BrowserRouter>
@@ -55,6 +65,23 @@ function App() {
 					)}
 					{activeTask && <ActiveTaskBar />}
 				</div>
+				<ToastContainer
+					position="top-right"
+					autoClose={5000}
+					hideProgressBar={false}
+					newestOnTop={false}
+					closeOnClick
+					rtl={false}
+					pauseOnFocusLoss
+					draggable
+					pauseOnHover
+					theme="dark"
+					toastStyle={{
+						backgroundColor: "#1f2937",
+						border: "1px solid #374151",
+						color: "#e5e7eb",
+					}}
+				/>
 			</DndProvider>
 		</PocketBaseProvider>
 	)
