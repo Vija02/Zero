@@ -1,7 +1,7 @@
 /// <reference path="../pb_data/types.d.ts" />
 
 // TODO: Cron how often
-cronAdd("generate_tasks_from_calendar", "0 * * * *", () => {
+cronAdd("generate_tasks_from_calendar", "*/30 * * * *", () => {
 	try {
 		function getSetting(key) {
 			const record = $app.findRecordsByFilter(
@@ -18,7 +18,6 @@ cronAdd("generate_tasks_from_calendar", "0 * * * *", () => {
 		const daysInAdvance = getSetting("days_in_advance") ?? 30
 		const calendarIds = (getSetting("calendar_ids") ?? "").split("\n")
 
-		// TODO: Handle refresh token
 		if (!accessToken) {
 			console.log("No access token found. Aborting")
 			return
@@ -212,9 +211,10 @@ cronAdd("generate_tasks_from_calendar", "0 * * * *", () => {
 				taskBlock.daysBefore,
 			)
 			// Calculate due date if @due was specified, otherwise leave blank
-			const dueDate = taskBlock.daysBeforeDue !== null
-				? calculateAllocatedDate(event.start, taskBlock.daysBeforeDue)
-				: null
+			const dueDate =
+				taskBlock.daysBeforeDue !== null
+					? calculateAllocatedDate(event.start, taskBlock.daysBeforeDue)
+					: null
 			// Use custom title from @title attribute, or fall back to event summary
 			const taskTitle = taskBlock.title || event.summary
 
@@ -241,9 +241,11 @@ cronAdd("generate_tasks_from_calendar", "0 * * * *", () => {
 					? currentAllocatedDate.split("T")[0]
 					: ""
 				const newDueDateNormalized = dueDate ? dueDate.split("T")[0] : ""
-				const currentDueDateNormalized = currentDueDate
-					? new Date(currentDueDate).toISOString().split("T")[0]
-					: ""
+				const parsedCurrentDueDate = new Date(currentDueDate)
+				const currentDueDateNormalized =
+					currentDueDate && !isNaN(parsedCurrentDueDate)
+						? parsedCurrentDueDate.toISOString().split("T")[0]
+						: ""
 
 				const needsUpdate =
 					currentAllocatedDateNormalized !== newAllocatedDateNormalized ||
@@ -261,7 +263,11 @@ cronAdd("generate_tasks_from_calendar", "0 * * * *", () => {
 				}
 			} else {
 				// Create new task
-				console.log(`Creating new task "${taskTitle}" for ${allocatedDate}${dueDate ? `, due: ${dueDate.split("T")[0]}` : ""}`)
+				console.log(
+					`Creating new task "${taskTitle}" for ${allocatedDate}${
+						dueDate ? `, due: ${dueDate.split("T")[0]}` : ""
+					}`,
+				)
 				const collection = $app.findCollectionByNameOrId("tasks")
 				const newTask = new Record(collection)
 				newTask.set("title", taskTitle)
