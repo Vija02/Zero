@@ -176,6 +176,7 @@ export function CalendarPage() {
 								min={new Date(1970, 1, 1, 9, 0, 0)}
 								max={new Date(1970, 1, 1, 23, 0, 0)}
 								style={{ height: "100%" }}
+								tooltipAccessor={null}
 							/>
 						</div>
 					)}
