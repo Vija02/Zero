@@ -238,10 +238,10 @@ cronAdd("generate_tasks_from_calendar", "*/30 * * * *", () => {
 			} else if (taskBlock.daysBeforeDue !== null) {
 				dueDate = calculateAllocatedDate(event.start, taskBlock.daysBeforeDue)
 			} else {
-				// Default due date is today
-				const today = new Date()
-				today.setHours(0, 0, 0, 0)
-				dueDate = today.toISOString()
+				// Default due date is the event date
+				const eventDate = new Date(event.start)
+				eventDate.setHours(0, 0, 0, 0)
+				dueDate = eventDate.toISOString()
 			}
 			// Use custom title from @title attribute, or fall back to event summary
 			const taskTitle = taskBlock.title || event.summary
