@@ -21,6 +21,7 @@ interface GoogleCalendarEvent {
 
 export interface CalendarEvent {
 	id: string
+	calendarId: string
 	title: string
 	start: Date
 	end: Date
@@ -43,7 +44,11 @@ interface UseGoogleCalendarEventsOptions {
 export function useGoogleCalendarEvents(
 	options: UseGoogleCalendarEventsOptions = {},
 ) {
-	const { currentDate = new Date(), bufferDays = 7, calendarIdsSettingKey } = options
+	const {
+		currentDate = new Date(),
+		bufferDays = 7,
+		calendarIdsSettingKey,
+	} = options
 
 	// Get settings from PocketBase
 	const { data: settings, isLoading: isLoadingSettings } =
@@ -58,8 +63,11 @@ export function useGoogleCalendarEvents(
 
 	const calendarIds = useMemo(() => {
 		if (!settings) return ["primary"]
-		const calendarIdsSetting = settings.find((s) => s.key === calendarIdsSettingKey)
-		const ids = calendarIdsSetting?.value?.split("\n").filter((id) => id.trim()) || []
+		const calendarIdsSetting = settings.find(
+			(s) => s.key === calendarIdsSettingKey,
+		)
+		const ids =
+			calendarIdsSetting?.value?.split("\n").filter((id) => id.trim()) || []
 		return ids.length > 0 ? ids : ["primary"]
 	}, [settings, calendarIdsSettingKey])
 
@@ -101,11 +109,13 @@ export function useGoogleCalendarEvents(
 
 			// Fetch events from all selected calendars
 			const allEvents: CalendarEvent[] = []
-			
+
 			for (const calendarId of calendarIds) {
 				try {
 					const response = await fetch(
-						`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?${params}`,
+						`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(
+							calendarId,
+						)}/events?${params}`,
 						{
 							headers: {
 								Authorization: `Bearer ${accessToken}`,
@@ -118,7 +128,9 @@ export function useGoogleCalendarEvents(
 							throw new Error("Access token expired. Please re-authenticate.")
 						}
 						// Continue to next calendar if this one fails
-						console.warn(`Failed to fetch events for calendar ${calendarId}: ${response.statusText}`)
+						console.warn(
+							`Failed to fetch events for calendar ${calendarId}: ${response.statusText}`,
+						)
 						continue
 					}
 
@@ -128,16 +140,20 @@ export function useGoogleCalendarEvents(
 					// Transform Google Calendar events to react-big-calendar format
 					const calendarEvents = items.map((event): CalendarEvent => {
 						const isAllDay = !event.start.dateTime
-						const start = new Date(event.start.dateTime || event.start.date || "")
+						const start = new Date(
+							event.start.dateTime || event.start.date || "",
+						)
 						const end = new Date(event.end.dateTime || event.end.date || "")
 
 						return {
-							id: `${calendarId}-${event.id}`, // Prefix with calendar ID to ensure uniqueness
+							id: event.id, // Prefix with calendar ID to ensure uniqueness
+							calendarId,
 							title: event.summary || "(No title)",
 							start,
 							end,
 							description: event.description,
 							allDay: isAllDay,
+							htmlLink: event.htmlLink,
 						}
 					})
 

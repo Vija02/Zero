@@ -11,7 +11,10 @@ interface CalendarEventModalProps {
 	onClose: () => void
 }
 
-export function CalendarEventModal({ event, onClose }: CalendarEventModalProps) {
+export function CalendarEventModal({
+	event,
+	onClose,
+}: CalendarEventModalProps) {
 	const queryClient = useQueryClient()
 	const [isUpdating, setIsUpdating] = useState(false)
 	const [showCreateTask, setShowCreateTask] = useState(false)
@@ -34,7 +37,7 @@ export function CalendarEventModal({ event, onClose }: CalendarEventModalProps) 
 			}
 
 			const response = await fetch(
-				`https://www.googleapis.com/calendar/v3/calendars/primary/events/${event.id}`,
+				`https://www.googleapis.com/calendar/v3/calendars/${event.calendarId}/events/${event.id}`,
 				{
 					method: "PATCH",
 					headers: {
@@ -66,7 +69,7 @@ export function CalendarEventModal({ event, onClose }: CalendarEventModalProps) 
 		const newDescription = currentDescription
 			? `${currentDescription}\n@@ignore`
 			: "@@ignore"
-		
+
 		try {
 			await updateDescriptionMutation.mutateAsync(newDescription)
 		} finally {
@@ -79,7 +82,7 @@ export function CalendarEventModal({ event, onClose }: CalendarEventModalProps) 
 
 		setIsUpdating(true)
 		const currentDescription = event.description || ""
-		
+
 		// Build the task block
 		let taskBlock = `@@task ${daysBefore}d`
 		if (customTitle.trim()) {
@@ -141,7 +144,9 @@ export function CalendarEventModal({ event, onClose }: CalendarEventModalProps) 
 				<div className="p-4 space-y-4">
 					{/* Event Title */}
 					<div>
-						<h2 className="text-lg font-medium text-[#e6e6e6]">{event.title}</h2>
+						<h2 className="text-lg font-medium text-[#e6e6e6]">
+							{event.title}
+						</h2>
 					</div>
 
 					{/* Event Time */}
@@ -150,7 +155,10 @@ export function CalendarEventModal({ event, onClose }: CalendarEventModalProps) 
 						<span>
 							{event.allDay
 								? format(event.start, "EEEE, MMMM d, yyyy")
-								: `${format(event.start, "EEEE, MMMM d, yyyy")} • ${format(event.start, "HH:mm")} - ${format(event.end, "HH:mm")}`}
+								: `${format(event.start, "EEEE, MMMM d, yyyy")} • ${format(
+										event.start,
+										"HH:mm",
+								  )} - ${format(event.end, "HH:mm")}`}
 						</span>
 					</div>
 
@@ -176,10 +184,12 @@ export function CalendarEventModal({ event, onClose }: CalendarEventModalProps) 
 					{/* Description */}
 					{event.description && (
 						<div className="text-sm text-[#888] bg-[#1a1a1a] rounded p-3 max-h-32 overflow-y-auto">
-							<pre className="whitespace-pre-wrap font-sans">{event.description}</pre>
+							<pre className="whitespace-pre-wrap font-sans">
+								{event.description}
+							</pre>
 						</div>
 					)}
-	
+
 					{/* Create Task Section */}
 					{!hasTask && !isIgnored && (
 						<div className="border-t border-[#333] pt-4">
@@ -193,8 +203,10 @@ export function CalendarEventModal({ event, onClose }: CalendarEventModalProps) 
 								</button>
 							) : (
 								<div className="space-y-3">
-									<div className="text-sm font-medium text-[#e6e6e6]">Create Task</div>
-									
+									<div className="text-sm font-medium text-[#e6e6e6]">
+										Create Task
+									</div>
+
 									<div className="space-y-2">
 										<label className="block text-xs text-[#888]">
 											Days before event to create task *
@@ -208,7 +220,7 @@ export function CalendarEventModal({ event, onClose }: CalendarEventModalProps) 
 											className="bg-[#1a1a1a] border-[#333] text-sm h-8"
 										/>
 									</div>
-	
+
 									<div className="space-y-2">
 										<label className="block text-xs text-[#888]">
 											Custom title (optional, defaults to event title)
@@ -221,7 +233,7 @@ export function CalendarEventModal({ event, onClose }: CalendarEventModalProps) 
 											className="bg-[#1a1a1a] border-[#333] text-sm h-8"
 										/>
 									</div>
-	
+
 									<div className="space-y-2">
 										<label className="block text-xs text-[#888]">
 											Due date - days before event (optional)
@@ -235,7 +247,7 @@ export function CalendarEventModal({ event, onClose }: CalendarEventModalProps) 
 											className="bg-[#1a1a1a] border-[#333] text-sm h-8"
 										/>
 									</div>
-	
+
 									<div className="flex gap-2 pt-1">
 										<button
 											onClick={() => setShowCreateTask(false)}
@@ -245,7 +257,9 @@ export function CalendarEventModal({ event, onClose }: CalendarEventModalProps) 
 										</button>
 										<button
 											onClick={handleCreateTask}
-											disabled={isUpdating || !daysBefore || parseInt(daysBefore) < 0}
+											disabled={
+												isUpdating || !daysBefore || parseInt(daysBefore) < 0
+											}
 											className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 										>
 											{isUpdating ? "Creating..." : "Create Task"}
