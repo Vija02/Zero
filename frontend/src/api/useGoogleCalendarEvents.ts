@@ -33,23 +33,35 @@ interface UseGoogleCalendarEventsOptions {
 	currentDate?: Date
 	// Extend date range around the current week for smoother navigation
 	bufferDays?: number
+	/**
+	 * The setting key to use for retrieving calendar IDs
+	 * Different use cases can use different keys
+	 */
+	calendarIdsSettingKey?: string
 }
 
 export function useGoogleCalendarEvents(
 	options: UseGoogleCalendarEventsOptions = {},
 ) {
-	const { currentDate = new Date(), bufferDays = 7 } = options
+	const { currentDate = new Date(), bufferDays = 7, calendarIdsSettingKey } = options
 
 	// Get settings from PocketBase
 	const { data: settings, isLoading: isLoadingSettings } =
 		usePbFullList("settings")
 
-	// Extract access token from settings
+	// Extract access token and calendar IDs from settings
 	const accessToken = useMemo(() => {
 		if (!settings) return null
 		const tokenSetting = settings.find((s) => s.key === "access_token")
 		return tokenSetting?.value || null
 	}, [settings])
+
+	const calendarIds = useMemo(() => {
+		if (!settings) return ["primary"]
+		const calendarIdsSetting = settings.find((s) => s.key === calendarIdsSettingKey)
+		const ids = calendarIdsSetting?.value?.split("\n").filter((id) => id.trim()) || []
+		return ids.length > 0 ? ids : ["primary"]
+	}, [settings, calendarIdsSettingKey])
 
 	// Calculate date range for the current view with buffer
 	const dateRange = useMemo(() => {
@@ -70,7 +82,7 @@ export function useGoogleCalendarEvents(
 	} = useQuery({
 		queryKey: [
 			"googleCalendarEvents",
-			"primary",
+			calendarIds,
 			dateRange.timeMin.toISOString(),
 			dateRange.timeMax.toISOString(),
 		],
@@ -87,40 +99,57 @@ export function useGoogleCalendarEvents(
 				maxResults: "250",
 			})
 
-			const response = await fetch(
-				`https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`,
-				{
-					headers: {
-						Authorization: `Bearer ${accessToken}`,
-					},
-				},
-			)
+			// Fetch events from all selected calendars
+			const allEvents: CalendarEvent[] = []
+			
+			for (const calendarId of calendarIds) {
+				try {
+					const response = await fetch(
+						`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?${params}`,
+						{
+							headers: {
+								Authorization: `Bearer ${accessToken}`,
+							},
+						},
+					)
 
-			if (!response.ok) {
-				if (response.status === 401) {
-					throw new Error("Access token expired. Please re-authenticate.")
+					if (!response.ok) {
+						if (response.status === 401) {
+							throw new Error("Access token expired. Please re-authenticate.")
+						}
+						// Continue to next calendar if this one fails
+						console.warn(`Failed to fetch events for calendar ${calendarId}: ${response.statusText}`)
+						continue
+					}
+
+					const data = await response.json()
+					const items: GoogleCalendarEvent[] = data.items || []
+
+					// Transform Google Calendar events to react-big-calendar format
+					const calendarEvents = items.map((event): CalendarEvent => {
+						const isAllDay = !event.start.dateTime
+						const start = new Date(event.start.dateTime || event.start.date || "")
+						const end = new Date(event.end.dateTime || event.end.date || "")
+
+						return {
+							id: `${calendarId}-${event.id}`, // Prefix with calendar ID to ensure uniqueness
+							title: event.summary || "(No title)",
+							start,
+							end,
+							description: event.description,
+							allDay: isAllDay,
+						}
+					})
+
+					allEvents.push(...calendarEvents)
+				} catch (err) {
+					console.warn(`Error fetching events for calendar ${calendarId}:`, err)
+					// Continue to next calendar
 				}
-				throw new Error(`Failed to fetch events: ${response.statusText}`)
 			}
 
-			const data = await response.json()
-			const items: GoogleCalendarEvent[] = data.items || []
-
-			// Transform Google Calendar events to react-big-calendar format
-			return items.map((event): CalendarEvent => {
-				const isAllDay = !event.start.dateTime
-				const start = new Date(event.start.dateTime || event.start.date || "")
-				const end = new Date(event.end.dateTime || event.end.date || "")
-
-				return {
-					id: event.id,
-					title: event.summary || "(No title)",
-					start,
-					end,
-					description: event.description,
-					allDay: isAllDay,
-				}
-			})
+			// Sort all events by start time
+			return allEvents.sort((a, b) => a.start.getTime() - b.start.getTime())
 		},
 		enabled: !!accessToken,
 		staleTime: 5 * 60 * 1000, // 5 minutes

@@ -1,5 +1,10 @@
 import { useState, useCallback, useMemo } from "react"
-import { Calendar as CalendarIcon, Menu, AlertCircle } from "lucide-react"
+import {
+	Calendar as CalendarIcon,
+	Menu,
+	AlertCircle,
+	Settings,
+} from "lucide-react"
 import { Calendar, dateFnsLocalizer, View } from "react-big-calendar"
 import { format, parse, startOfWeek, getDay } from "date-fns"
 import { enGB } from "date-fns/locale"
@@ -11,6 +16,8 @@ import {
 } from "@/api/useGoogleCalendarEvents"
 import { useNavigate } from "react-router-dom"
 import { CalendarEventModal } from "@/components/modal/calendar-event-modal"
+import { CalendarSettingsModal } from "@/components/modal/calendar-settings-modal"
+import { CALENDAR_SETTING_KEYS } from "@/api/useCalendarSettings"
 import "react-big-calendar/lib/css/react-big-calendar.css"
 
 // Setup date-fns localizer for react-big-calendar
@@ -32,10 +39,12 @@ export function CalendarPage() {
 	const [currentDate, setCurrentDate] = useState(new Date())
 	const [view, setView] = useState<View>("week")
 	const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
+	const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
 	const { events, isLoading, isAuthenticated, error } = useGoogleCalendarEvents(
 		{
 			currentDate,
+			calendarIdsSettingKey: CALENDAR_SETTING_KEYS.TASK_PLANNER_CALENDAR,
 		},
 	)
 
@@ -53,6 +62,14 @@ export function CalendarPage() {
 
 	const handleCloseEventModal = useCallback(() => {
 		setSelectedEvent(null)
+	}, [])
+
+	const handleOpenSettings = useCallback(() => {
+		setIsSettingsOpen(true)
+	}, [])
+
+	const handleCloseSettings = useCallback(() => {
+		setIsSettingsOpen(false)
 	}, [])
 
 	// Custom event styling
@@ -101,18 +118,33 @@ export function CalendarPage() {
 					onClose={handleCloseEventModal}
 				/>
 			)}
+			<CalendarSettingsModal
+				isOpen={isSettingsOpen}
+				onClose={handleCloseSettings}
+				settingKey={CALENDAR_SETTING_KEYS.TASK_PLANNER_CALENDAR}
+				title="Display Calendars"
+			/>
 			<main className="flex-1 flex flex-col overflow-hidden">
-				<header className="h-12 flex items-center px-2 sm:px-4 border-b border-[#252525] bg-[#121212]">
-					<button
-						onClick={toggleSidebar}
-						className="md:hidden flex items-center justify-center p-2 hover:bg-[#252525] rounded transition-colors"
-					>
-						<Menu className="w-5 h-5" />
-					</button>
-					<div className="flex items-center gap-2 ml-2">
-						<CalendarIcon className="w-5 h-5" />
-						<h1 className="text-lg font-semibold">Calendar</h1>
+				<header className="h-12 flex items-center justify-between px-2 sm:px-4 border-b border-[#252525] bg-[#121212]">
+					<div className="flex items-center">
+						<button
+							onClick={toggleSidebar}
+							className="md:hidden flex items-center justify-center p-2 hover:bg-[#252525] rounded transition-colors"
+						>
+							<Menu className="w-5 h-5" />
+						</button>
+						<div className="flex items-center gap-2 ml-2">
+							<CalendarIcon className="w-5 h-5" />
+							<h1 className="text-lg font-semibold">Calendar</h1>
+						</div>
 					</div>
+					<button
+						onClick={handleOpenSettings}
+						className="flex items-center justify-center p-2 hover:bg-[#252525] rounded transition-colors"
+						title="Calendar Settings"
+					>
+						<Settings className="w-5 h-5" />
+					</button>
 				</header>
 
 				<div className="flex-1 overflow-hidden p-4">

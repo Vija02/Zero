@@ -22,7 +22,7 @@ const CLIENT_SECRET_KEY = "client_secret"
 const REDIRECT_URI_KEY = "redirect_uri"
 const ACCESS_TOKEN_KEY = "access_token"
 const REFRESH_TOKEN_KEY = "refresh_token"
-const CALENDAR_IDS_KEY = "calendar_ids"
+const CALENDAR_IDS_KEY = "task_import_calendar_ids"
 const DAYS_IN_ADVANCE_KEY = "days_in_advance"
 
 export function SettingsPage() {
