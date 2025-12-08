@@ -15,6 +15,7 @@ const ACCESS_TOKEN_KEY = "access_token"
 export const CALENDAR_SETTING_KEYS = {
 	TASK_PLANNER_CALENDAR: "task_planner_calendar_ids",
 	TASK_IMPORT: "task_import_calendar_ids",
+	SLOT_FINDER_CALENDAR: "slot_finder_calendar_ids",
 } as const
 
 // Default setting key for backward compatibility

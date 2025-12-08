@@ -12,6 +12,7 @@ export enum Collections {
 	Otps = "_otps",
 	Superusers = "_superusers",
 	Settings = "settings",
+	SlotFinderAvailabilities = "slot_finder_availabilities",
 	Tasks = "tasks",
 	Users = "users",
 }
@@ -100,6 +101,12 @@ export type SettingsRecord = {
 	value?: string
 }
 
+export type SlotFinderAvailabilitiesRecord = {
+	end?: IsoDateString
+	id: string
+	start?: IsoDateString
+}
+
 export type TasksRecord = {
 	allocated_date: IsoDateString
 	carry_over?: number
@@ -107,6 +114,7 @@ export type TasksRecord = {
 	created: IsoAutoDateString
 	description?: HTMLString
 	due_date?: IsoDateString
+	google_calendar_id?: string
 	id: string
 	order?: number
 	title?: string
@@ -133,6 +141,7 @@ export type MfasResponse<Texpand = unknown> = Required<MfasRecord> & BaseSystemF
 export type OtpsResponse<Texpand = unknown> = Required<OtpsRecord> & BaseSystemFields<Texpand>
 export type SuperusersResponse<Texpand = unknown> = Required<SuperusersRecord> & AuthSystemFields<Texpand>
 export type SettingsResponse<Texpand = unknown> = Required<SettingsRecord> & BaseSystemFields<Texpand>
+export type SlotFinderAvailabilitiesResponse<Texpand = unknown> = Required<SlotFinderAvailabilitiesRecord> & BaseSystemFields<Texpand>
 export type TasksResponse<Texpand = unknown> = Required<TasksRecord> & BaseSystemFields<Texpand>
 export type UsersResponse<Texpand = unknown> = Required<UsersRecord> & AuthSystemFields<Texpand>
 
@@ -145,6 +154,7 @@ export type CollectionRecords = {
 	_otps: OtpsRecord
 	_superusers: SuperusersRecord
 	settings: SettingsRecord
+	slot_finder_availabilities: SlotFinderAvailabilitiesRecord
 	tasks: TasksRecord
 	users: UsersRecord
 }
@@ -156,6 +166,7 @@ export type CollectionResponses = {
 	_otps: OtpsResponse
 	_superusers: SuperusersResponse
 	settings: SettingsResponse
+	slot_finder_availabilities: SlotFinderAvailabilitiesResponse
 	tasks: TasksResponse
 	users: UsersResponse
 }

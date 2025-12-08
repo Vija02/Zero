@@ -4,6 +4,7 @@ import { LoginPage } from "./pages/LoginPage"
 import { DashboardPage } from "./pages/DashboardPage"
 import { SettingsPage } from "./pages/SettingsPage"
 import { TaskPlannerPage } from "./pages/TaskPlannerPage"
+import { SlotFinderPage } from "./pages/SlotFinderPage"
 import { PocketBaseProvider } from "use-pocketbase"
 import { DndProvider } from "react-dnd"
 import { HTML5Backend } from "react-dnd-html5-backend"
@@ -45,8 +46,9 @@ function App() {
 							<Route path="/login" element={<LoginPage />} />
 							<Route element={<ProtectedRoute />}>
 								<Route path="/dashboard" element={<DashboardPage />} />
-								<Route path="/settings" element={<SettingsPage />} />
-								<Route path="/task-planner" element={<TaskPlannerPage />} />
+									<Route path="/settings" element={<SettingsPage />} />
+									<Route path="/task-planner" element={<TaskPlannerPage />} />
+									<Route path="/slot-finder" element={<SlotFinderPage />} />
 							</Route>
 							<Route path="/" element={<Navigate to="/dashboard" replace />} />
 							<Route path="*" element={<Navigate to="/dashboard" replace />} />
