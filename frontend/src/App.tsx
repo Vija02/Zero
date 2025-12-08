@@ -3,7 +3,7 @@ import { ProtectedRoute } from "./modules/ProtectedRoute"
 import { LoginPage } from "./pages/LoginPage"
 import { DashboardPage } from "./pages/DashboardPage"
 import { SettingsPage } from "./pages/SettingsPage"
-import { CalendarPage } from "./pages/CalendarPage"
+import { TaskPlannerPage } from "./pages/TaskPlannerPage"
 import { PocketBaseProvider } from "use-pocketbase"
 import { DndProvider } from "react-dnd"
 import { HTML5Backend } from "react-dnd-html5-backend"
@@ -46,7 +46,7 @@ function App() {
 							<Route element={<ProtectedRoute />}>
 								<Route path="/dashboard" element={<DashboardPage />} />
 								<Route path="/settings" element={<SettingsPage />} />
-								<Route path="/calendar" element={<CalendarPage />} />
+								<Route path="/task-planner" element={<TaskPlannerPage />} />
 							</Route>
 							<Route path="/" element={<Navigate to="/dashboard" replace />} />
 							<Route path="*" element={<Navigate to="/dashboard" replace />} />

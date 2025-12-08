@@ -33,7 +33,7 @@ const localizer = dateFnsLocalizer({
 	locales,
 })
 
-export function CalendarPage() {
+export function TaskPlannerPage() {
 	const { toggleSidebar } = useSidebarStore()
 	const navigate = useNavigate()
 	const [currentDate, setCurrentDate] = useState(new Date())

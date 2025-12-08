@@ -3,7 +3,8 @@
 import { usePocketBase } from "@/api/usePocketBase"
 import {
 	Archive,
-	Calendar,
+	BetweenHorizontalEnd,
+	ClipboardList,
 	Home,
 	LogOut,
 	Settings,
@@ -21,8 +22,10 @@ export function LeftSidebar() {
 	const navigate = useNavigate()
 	const location = useLocation()
 
-	const isOnDashboard = location.pathname === "/dashboard" || location.pathname === "/"
-	const isOnCalendar = location.pathname === "/calendar"
+	const isOnDashboard =
+		location.pathname === "/dashboard" || location.pathname === "/"
+	const isOnTaskPlanner = location.pathname === "/task-planner"
+	const isOnSlotFinder = location.pathname === "/slot-finder"
 
 	const handleNavigate = (path: string) => {
 		navigate(path)
@@ -86,16 +89,34 @@ export function LeftSidebar() {
 						</div>
 						<div className="space-y-0.5 mt-1">
 							<button
-								onClick={() => handleNavigate("/calendar")}
+								onClick={() => handleNavigate("/task-planner")}
 								className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors cursor-pointer ${
-									isOnCalendar
+									isOnTaskPlanner
 										? "bg-[#252525] text-[#e6e6e6]"
 										: "text-[#888] hover:bg-[#1e1e1e] hover:text-[#e6e6e6]"
 								}`}
 							>
-								<Calendar className="w-4 h-4" />
-								Calendar
+								<ClipboardList className="w-4 h-4" />
+								Task Planner
 							</button>
+							<button
+								onClick={() => handleNavigate("/slot-finder")}
+								className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors cursor-pointer ${
+									isOnSlotFinder
+										? "bg-[#252525] text-[#e6e6e6]"
+										: "text-[#888] hover:bg-[#1e1e1e] hover:text-[#e6e6e6]"
+								}`}
+							>
+								<BetweenHorizontalEnd className="w-4 h-4" />
+								Slot Finder
+							</button>
+						</div>
+					</div>
+					<div className="mt-6">
+						<div className="px-2 py-1 text-[10px] uppercase tracking-wider text-[#555] font-medium">
+							Misc.
+						</div>
+						<div className="space-y-0.5 mt-1">
 							<button
 								onClick={toggleBacklog}
 								className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors cursor-pointer ${
