@@ -16,7 +16,9 @@ cronAdd("generate_tasks_from_calendar", "*/30 * * * *", () => {
 
 		const accessToken = getSetting("access_token")
 		const daysInAdvance = getSetting("days_in_advance") ?? 30
-		const calendarIds = (getSetting("calendar_ids") ?? "").split("\n")
+		const calendarIds = (getSetting("task_import_calendar_ids") ?? "").split(
+			"\n",
+		)
 
 		if (!accessToken) {
 			console.log("No access token found. Aborting")
