@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from "react"
+import { useState, useCallback, useMemo } from "react"
 import {
 	Calendar as CalendarIcon,
 	Menu,
@@ -9,7 +9,7 @@ import {
 	Trash2,
 } from "lucide-react"
 import { Calendar, dateFnsLocalizer, View, SlotInfo } from "react-big-calendar"
-import { format, parse, startOfWeek, getDay, addMinutes } from "date-fns"
+import { format, parse, startOfWeek, getDay } from "date-fns"
 import { enGB } from "date-fns/locale"
 import { LeftSidebar } from "@/components/left-sidebar"
 import { useSidebarStore } from "@/stores/useSidebarStore"
@@ -20,6 +20,9 @@ import {
 import { useNavigate } from "react-router-dom"
 import { CalendarSettingsModal } from "@/components/modal/calendar-settings-modal"
 import { CALENDAR_SETTING_KEYS } from "@/api/useCalendarSettings"
+import { usePbFullList } from "@/api/usePbQueries"
+import { usePbMutations } from "@/api/usePbMutations"
+import { SlotFinderAvailabilitiesResponse } from "@/pocketbase-types"
 import "react-big-calendar/lib/css/react-big-calendar.css"
 
 // Setup date-fns localizer for react-big-calendar
@@ -49,14 +52,26 @@ export function SlotFinderPage() {
 	const [view, setView] = useState<View>("week")
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 	const [hideEventText, setHideEventText] = useState(false)
-	const [availabilitySlots, setAvailabilitySlots] = useState<AvailabilitySlot[]>([])
-	
-	// Drawing state
-	const [isDrawing, setIsDrawing] = useState(false)
-	const [drawStart, setDrawStart] = useState<Date | null>(null)
-	const drawingRef = useRef<boolean>(false)
 
-	const { events, isLoading, isAuthenticated, error } = useGoogleCalendarEvents(
+	// Fetch availability slots from database
+	const { data: dbSlots, isLoading: isSlotsLoading } = usePbFullList("slot_finder_availabilities")
+	const {
+		create: { mutate: createSlot },
+		deleteRecord: { mutate: deleteSlot },
+	} = usePbMutations("slot_finder_availabilities")
+
+	// Convert database slots to calendar format
+	const availabilitySlots: AvailabilitySlot[] = useMemo(() => {
+		if (!dbSlots) return []
+		return dbSlots.map((slot: SlotFinderAvailabilitiesResponse) => ({
+			id: slot.id,
+			start: new Date(slot.start),
+			end: new Date(slot.end),
+			title: "Available",
+		}))
+	}, [dbSlots])
+
+	const { events, isLoading: isEventsLoading, isAuthenticated, error } = useGoogleCalendarEvents(
 		{
 			currentDate,
 			calendarIdsSettingKey: CALENDAR_SETTING_KEYS.SLOT_FINDER_CALENDAR,
@@ -84,24 +99,24 @@ export function SlotFinderPage() {
 	}, [])
 
 	const handleClearSlots = useCallback(() => {
-		setAvailabilitySlots([])
-	}, [])
+		// Delete all slots from the database
+		availabilitySlots.forEach((slot) => {
+			deleteSlot(slot.id)
+		})
+	}, [availabilitySlots, deleteSlot])
 
 	// Handle slot selection (clicking and dragging on calendar)
 	const handleSelectSlot = useCallback((slotInfo: SlotInfo) => {
-		const newSlot: AvailabilitySlot = {
-			id: `slot-${Date.now()}`,
-			start: slotInfo.start,
-			end: slotInfo.end,
-			title: "Available",
-		}
-		setAvailabilitySlots((prev) => [...prev, newSlot])
-	}, [])
+		createSlot({
+			start: slotInfo.start.toISOString(),
+			end: slotInfo.end.toISOString(),
+		})
+	}, [createSlot])
 
 	// Handle clicking on an availability slot to remove it
 	const handleSelectAvailabilitySlot = useCallback((slot: AvailabilitySlot) => {
-		setAvailabilitySlots((prev) => prev.filter((s) => s.id !== slot.id))
-	}, [])
+		deleteSlot(slot.id)
+	}, [deleteSlot])
 
 	// Combine calendar events with availability slots for display
 	const allEvents = useMemo(() => {
@@ -282,9 +297,9 @@ export function SlotFinderPage() {
 						</div>
 					) : (
 						<div className="h-full calendar-container">
-							{isLoading && (
+							{(isEventsLoading || isSlotsLoading) && (
 								<div className="absolute inset-0 bg-[#08090A]/50 flex items-center justify-center z-10">
-									<div className="text-[#888]">Loading events...</div>
+									<div className="text-[#888]">Loading...</div>
 								</div>
 							)}
 							<div className="mb-2 text-sm text-[#888]">
