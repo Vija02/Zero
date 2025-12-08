@@ -107,6 +107,7 @@ cronAdd("generate_tasks_from_calendar", "*/30 * * * *", () => {
 		// Format: @@task Nd (where N is number of days before event)
 		//         @title Custom Title (optional)
 		//         @due Nd (optional - N days before event for due date)
+		//         @nodue (optional - explicitly set no due date)
 		function parseTaskBlock(rawDescription) {
 			function htmlToPlainText(html) {
 				return html
@@ -137,6 +138,10 @@ cronAdd("generate_tasks_from_calendar", "*/30 * * * *", () => {
 			const titleMatch = description.match(/@title\s+(.+?)(?:\n|$)/i)
 			const title = titleMatch ? titleMatch[1].trim() : null
 
+			// Look for @nodue attribute (optional - explicitly no due date)
+			const noDueMatch = description.match(/@nodue\b/i)
+			const hasNoDue = !!noDueMatch
+
 			// Look for @due attribute (optional - N days before event)
 			const dueMatch = description.match(/@due\s+(\d+)d/i)
 			const daysBeforeDue = dueMatch ? parseInt(dueMatch[1], 10) : null
@@ -145,6 +150,7 @@ cronAdd("generate_tasks_from_calendar", "*/30 * * * *", () => {
 				daysBefore: daysBefore,
 				title: title,
 				daysBeforeDue: daysBeforeDue,
+				hasNoDue: hasNoDue,
 			}
 		}
 
@@ -222,11 +228,21 @@ cronAdd("generate_tasks_from_calendar", "*/30 * * * *", () => {
 				event.start,
 				taskBlock.daysBefore,
 			)
-			// Calculate due date if @due was specified, otherwise leave blank
-			const dueDate =
-				taskBlock.daysBeforeDue !== null
-					? calculateAllocatedDate(event.start, taskBlock.daysBeforeDue)
-					: null
+			// Calculate due date:
+			// - If @nodue is specified, set to null
+			// - If @due Nd is specified, calculate N days before event
+			// - Otherwise, default to today
+			let dueDate = null
+			if (taskBlock.hasNoDue) {
+				dueDate = null
+			} else if (taskBlock.daysBeforeDue !== null) {
+				dueDate = calculateAllocatedDate(event.start, taskBlock.daysBeforeDue)
+			} else {
+				// Default due date is today
+				const today = new Date()
+				today.setHours(0, 0, 0, 0)
+				dueDate = today.toISOString()
+			}
 			// Use custom title from @title attribute, or fall back to event summary
 			const taskTitle = taskBlock.title || event.summary
 
