@@ -40,6 +40,7 @@ const localizer = dateFnsLocalizer({
 
 interface AvailabilitySlot {
 	id: string
+	calendarId: string
 	start: Date
 	end: Date
 	title: string
@@ -54,7 +55,9 @@ export function SlotFinderPage() {
 	const [hideEventText, setHideEventText] = useState(false)
 
 	// Fetch availability slots from database
-	const { data: dbSlots, isLoading: isSlotsLoading } = usePbFullList("slot_finder_availabilities")
+	const { data: dbSlots, isLoading: isSlotsLoading } = usePbFullList(
+		"slot_finder_availabilities",
+	)
 	const {
 		create: { mutate: createSlot },
 		deleteRecord: { mutate: deleteSlot },
@@ -65,18 +68,22 @@ export function SlotFinderPage() {
 		if (!dbSlots) return []
 		return dbSlots.map((slot: SlotFinderAvailabilitiesResponse) => ({
 			id: slot.id,
+			calendarId: "",
 			start: new Date(slot.start),
 			end: new Date(slot.end),
 			title: "Available",
 		}))
 	}, [dbSlots])
 
-	const { events, isLoading: isEventsLoading, isAuthenticated, error } = useGoogleCalendarEvents(
-		{
-			currentDate,
-			calendarIdsSettingKey: CALENDAR_SETTING_KEYS.SLOT_FINDER_CALENDAR,
-		},
-	)
+	const {
+		events,
+		isLoading: isEventsLoading,
+		isAuthenticated,
+		error,
+	} = useGoogleCalendarEvents({
+		currentDate,
+		calendarIdsSettingKey: CALENDAR_SETTING_KEYS.SLOT_FINDER_CALENDAR,
+	})
 
 	const handleNavigate = useCallback((newDate: Date) => {
 		setCurrentDate(newDate)
@@ -106,17 +113,23 @@ export function SlotFinderPage() {
 	}, [availabilitySlots, deleteSlot])
 
 	// Handle slot selection (clicking and dragging on calendar)
-	const handleSelectSlot = useCallback((slotInfo: SlotInfo) => {
-		createSlot({
-			start: slotInfo.start.toISOString(),
-			end: slotInfo.end.toISOString(),
-		})
-	}, [createSlot])
+	const handleSelectSlot = useCallback(
+		(slotInfo: SlotInfo) => {
+			createSlot({
+				start: slotInfo.start.toISOString(),
+				end: slotInfo.end.toISOString(),
+			})
+		},
+		[createSlot],
+	)
 
 	// Handle clicking on an availability slot to remove it
-	const handleSelectAvailabilitySlot = useCallback((slot: AvailabilitySlot) => {
-		deleteSlot(slot.id)
-	}, [deleteSlot])
+	const handleSelectAvailabilitySlot = useCallback(
+		(slot: AvailabilitySlot) => {
+			deleteSlot(slot.id)
+		},
+		[deleteSlot],
+	)
 
 	// Combine calendar events with availability slots for display
 	const allEvents = useMemo(() => {
@@ -303,7 +316,8 @@ export function SlotFinderPage() {
 								</div>
 							)}
 							<div className="mb-2 text-sm text-[#888]">
-								Click and drag on the calendar to mark available time slots. Click on a green slot to remove it.
+								Click and drag on the calendar to mark available time slots.
+								Click on a green slot to remove it.
 							</div>
 							<Calendar
 								localizer={localizer}
@@ -317,9 +331,13 @@ export function SlotFinderPage() {
 								date={currentDate}
 								onNavigate={handleNavigate}
 								onSelectSlot={handleSelectSlot}
-								onSelectEvent={(event: CalendarEvent & { isAvailabilitySlot?: boolean }) => {
+								onSelectEvent={(
+									event: CalendarEvent & { isAvailabilitySlot?: boolean },
+								) => {
 									if (event.isAvailabilitySlot) {
-										handleSelectAvailabilitySlot(event as unknown as AvailabilitySlot)
+										handleSelectAvailabilitySlot(
+											event as unknown as AvailabilitySlot,
+										)
 									}
 								}}
 								eventPropGetter={eventStyleGetter}
