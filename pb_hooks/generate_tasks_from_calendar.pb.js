@@ -241,12 +241,13 @@ cronAdd("generate_tasks_from_calendar", "*/30 * * * *", () => {
 			}
 
 			if (existingTask) {
-				// Update existing task if allocated_date, title, or due_date changed
+				// Update existing task if allocated_date, title, due_date, or google_calendar_date changed
 				const currentAllocatedDate = new Date(
 					existingTask.get("allocated_date"),
 				).toISOString()
 				const currentTitle = existingTask.get("title")
 				const currentDueDate = existingTask.get("due_date")
+				const currentGoogleCalendarDate = existingTask.get("google_calendar_date")
 				const newAllocatedDateNormalized = allocatedDate.split("T")[0]
 				const currentAllocatedDateNormalized = currentAllocatedDate
 					? currentAllocatedDate.split("T")[0]
@@ -257,19 +258,30 @@ cronAdd("generate_tasks_from_calendar", "*/30 * * * *", () => {
 					currentDueDate && !isNaN(parsedCurrentDueDate)
 						? parsedCurrentDueDate.toISOString().split("T")[0]
 						: ""
+				const newGoogleCalendarDate = event.start
+				const parsedCurrentGoogleCalendarDate = new Date(currentGoogleCalendarDate)
+				const currentGoogleCalendarDateNormalized =
+					currentGoogleCalendarDate && !isNaN(parsedCurrentGoogleCalendarDate)
+						? parsedCurrentGoogleCalendarDate.toISOString().split("T")[0]
+						: ""
+				const newGoogleCalendarDateNormalized = newGoogleCalendarDate
+					? newGoogleCalendarDate.split("T")[0]
+					: ""
 
 				const needsUpdate =
 					currentAllocatedDateNormalized !== newAllocatedDateNormalized ||
 					currentTitle !== taskTitle ||
-					currentDueDateNormalized !== newDueDateNormalized
+					currentDueDateNormalized !== newDueDateNormalized ||
+					currentGoogleCalendarDateNormalized !== newGoogleCalendarDateNormalized
 
 				if (needsUpdate) {
 					console.log(
-						`Updating task "${taskTitle}" - allocated_date: ${currentAllocatedDateNormalized} -> ${newAllocatedDateNormalized}, title: ${currentTitle} -> ${taskTitle}, due_date: ${currentDueDateNormalized} -> ${newDueDateNormalized}`,
+						`Updating task "${taskTitle}" - allocated_date: ${currentAllocatedDateNormalized} -> ${newAllocatedDateNormalized}, title: ${currentTitle} -> ${taskTitle}, due_date: ${currentDueDateNormalized} -> ${newDueDateNormalized}, google_calendar_date: ${currentGoogleCalendarDateNormalized} -> ${newGoogleCalendarDateNormalized}`,
 					)
 					existingTask.set("allocated_date", allocatedDate)
 					existingTask.set("title", taskTitle)
 					existingTask.set("due_date", dueDate)
+					existingTask.set("google_calendar_date", newGoogleCalendarDate)
 					$app.save(existingTask)
 				}
 			} else {
@@ -277,12 +289,13 @@ cronAdd("generate_tasks_from_calendar", "*/30 * * * *", () => {
 				console.log(
 					`Creating new task "${taskTitle}" for ${allocatedDate}${
 						dueDate ? `, due: ${dueDate.split("T")[0]}` : ""
-					}`,
+					}, calendar event date: ${event.start}`,
 				)
 				const collection = $app.findCollectionByNameOrId("tasks")
 				const newTask = new Record(collection)
 				newTask.set("title", taskTitle)
 				newTask.set("google_calendar_id", event.id)
+				newTask.set("google_calendar_date", event.start)
 				newTask.set("allocated_date", allocatedDate)
 				newTask.set("due_date", dueDate)
 				newTask.set("completed", false)
