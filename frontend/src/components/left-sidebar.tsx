@@ -4,6 +4,7 @@ import { usePocketBase } from "@/api/usePocketBase"
 import {
 	Archive,
 	BetweenHorizontalEnd,
+	CalendarSync,
 	ClipboardList,
 	Home,
 	LogOut,
@@ -13,6 +14,7 @@ import {
 import { useNavigate, useLocation } from "react-router-dom"
 import { useSidebarStore } from "@/stores/useSidebarStore"
 import { useBacklogStore } from "@/stores/useBacklogStore"
+import { toast } from "react-toastify"
 
 export function LeftSidebar() {
 	const { sidebarOpen, toggleSidebar, setSidebarOpen } = useSidebarStore()
@@ -35,6 +37,11 @@ export function LeftSidebar() {
 	const handleLogout = () => {
 		pb.authStore.clear()
 		setSidebarOpen(false)
+	}
+
+	const toggleSyncRefresh = async () => {
+		await pb.crons.run("generate_tasks_from_calendar")
+		toast("Tasks synced")
 	}
 
 	return (
@@ -127,6 +134,13 @@ export function LeftSidebar() {
 							>
 								<Archive className="w-4 h-4" />
 								Backlog
+							</button>
+							<button
+								onClick={toggleSyncRefresh}
+								className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors cursor-pointer text-[#888] hover:bg-[#1e1e1e] hover:text-[#e6e6e6]`}
+							>
+								<CalendarSync className="w-4 h-4" />
+								Resync
 							</button>
 						</div>
 					</div>
