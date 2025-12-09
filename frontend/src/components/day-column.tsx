@@ -1,6 +1,6 @@
 import type React from "react"
 import { useRef, useState, useCallback, MutableRefObject } from "react"
-import { Plus, Circle, CheckCircle2, RefreshCw } from "lucide-react"
+import { Plus, Circle, CheckCircle2, RefreshCw, Calendar } from "lucide-react"
 import { useAddTaskStore } from "@/stores/useAddTaskStore"
 import { useTaskDetailStore } from "@/stores/useTaskDetailStore"
 import { format, isSameDay, isToday } from "date-fns"
@@ -298,7 +298,6 @@ interface TaskCardProps {
 
 function TaskCard({ task, day, index }: TaskCardProps) {
 	const { openTaskDetail } = useTaskDetailStore()
-	const tagColor = "#666"
 
 	const {
 		update: { mutate: updateTask },
@@ -386,7 +385,7 @@ function TaskCard({ task, day, index }: TaskCardProps) {
 							{task.completed ? (
 								<CheckCircle2 className="w-5 h-5 text-[#22c55e]" />
 							) : (
-								<Circle className="w-5 h-5 text-[#444] hover:text-[#666]" />
+								<Circle className="w-5 h-5 text-[#555] hover:text-[#666]" />
 							)}
 						</button>
 						{task.carry_over > 0 && (
@@ -403,12 +402,13 @@ function TaskCard({ task, day, index }: TaskCardProps) {
 							</div>
 						)}
 					</div>
-					<span
-						className="text-[10px] px-1.5 py-0.5 rounded"
-						style={{ color: tagColor }}
-					>
-						{/* # {task.tag} */}
-					</span>
+					<div>
+						{task.google_calendar_id && (
+							<div title="Google Calendar event">
+								<Calendar className="w-4 h-4 text-gray-400 opacity-60" />
+							</div>
+						)}
+					</div>
 				</div>
 			</div>
 		</div>
