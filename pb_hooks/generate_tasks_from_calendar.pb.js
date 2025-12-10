@@ -85,6 +85,7 @@ cronAdd("generate_tasks_from_calendar", "*/30 * * * *", () => {
 		}
 
 		const now = new Date()
+		now.setHours(0, 0, 0, 0) // Set to start of today
 		const daysLater = new Date(
 			now.getTime() + daysInAdvance * 24 * 60 * 60 * 1000,
 		)
