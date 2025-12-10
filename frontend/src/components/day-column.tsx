@@ -3,7 +3,7 @@ import { useRef, useState, useCallback, MutableRefObject } from "react"
 import { Plus, Circle, CheckCircle2, RefreshCw, Calendar } from "lucide-react"
 import { useAddTaskStore } from "@/stores/useAddTaskStore"
 import { useTaskDetailStore } from "@/stores/useTaskDetailStore"
-import { format, isSameDay, isToday } from "date-fns"
+import { format, isBefore, isSameDay } from "date-fns"
 import { usePbFullList } from "@/api/usePbQueries"
 import { TasksResponse } from "@/pocketbase-types"
 import { usePbMutations } from "@/api/usePbMutations"
@@ -323,7 +323,8 @@ function TaskCard({ task, day, index }: TaskCardProps) {
 	}
 
 	// Check if task is due today
-	const isDueToday = task.due_date && isToday(new Date(task.due_date))
+	const isDueToday =
+		task.due_date && isBefore(new Date(task.due_date), new Date())
 
 	return (
 		<div
