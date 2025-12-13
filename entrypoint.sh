@@ -15,24 +15,27 @@ create_superuser() {
     fi
 }
 
+# Restore the database if it does not already exist
+litestream restore -v -if-db-not-exists -if-replica-exists -o /data/db $REPLICA_URL
+
 # If no arguments passed, use default serve command
 if [ $# -eq 0 ]; then
     create_superuser
-    exec /usr/local/bin/pocketbase $DEFAULT_SERVE_ARGS
+    exec litestream replicate -exec "/usr/local/bin/pocketbase $DEFAULT_SERVE_ARGS"
 fi
 
 # Handle global flags that should go to main pocketbase command
 case "$1" in
     --help|-h|--version|-v)
-        exec /usr/local/bin/pocketbase "$@"
+        exec litestream replicate -exec "/usr/local/bin/pocketbase $@"
         ;;
 esac
 
 # If first argument starts with '-', treat as serve arguments
 if [ "${1#-}" != "$1" ]; then
     create_superuser
-    exec /usr/local/bin/pocketbase $DEFAULT_SERVE_ARGS "$@"
+    exec litestream replicate -exec "/usr/local/bin/pocketbase $DEFAULT_SERVE_ARGS $@"
 fi
 
 # Otherwise, pass all arguments directly to pocketbase
-exec /usr/local/bin/pocketbase "$@"
+exec litestream replicate -exec "/usr/local/bin/pocketbase $@"
