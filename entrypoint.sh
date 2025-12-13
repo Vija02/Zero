@@ -16,7 +16,7 @@ create_superuser() {
 }
 
 # Restore the database if it does not already exist
-litestream restore -v -if-db-not-exists -if-replica-exists -o /data/db $REPLICA_URL
+litestream restore -if-db-not-exists -if-replica-exists -o /data/db $REPLICA_URL
 
 # If no arguments passed, use default serve command
 if [ $# -eq 0 ]; then
