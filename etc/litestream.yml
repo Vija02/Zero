@@ -3,6 +3,10 @@ secret-access-key: ${LITESTREAM_SECRET_ACCESS_KEY}
 
 dbs:
   - path: /pb_data/data.db
-    replicas:
-      - url: ${REPLICA_URL}
-        sign-payload: true
+    replica:
+      type: s3
+      bucket: ${REPLICA_BUCKET}
+      path: ${REPLICA_PATH}
+      endpoint: ${REPLICA_ENDPOINT}
+      force-path-style: true
+      sign-payload: true
