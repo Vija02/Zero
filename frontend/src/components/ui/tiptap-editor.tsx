@@ -4,6 +4,7 @@ import StarterKit from "@tiptap/starter-kit"
 import TaskList from "@tiptap/extension-task-list"
 import TaskItem from "@tiptap/extension-task-item"
 import { useEffect, useCallback } from "react"
+import { Placeholder } from "@tiptap/extensions"
 import { CheckSquare, Bold, Italic, Code } from "lucide-react"
 
 interface TiptapEditorProps {
@@ -43,6 +44,9 @@ export function TiptapEditor({
 				HTMLAttributes: {
 					class: "task-item",
 				},
+			}),
+			Placeholder.configure({
+				placeholder,
 			}),
 		],
 		content: content || "",
@@ -124,11 +128,6 @@ export function TiptapEditor({
 				</button>
 			</BubbleMenu>
 			<EditorContent editor={editor} className="h-full" />
-			{editor.isEmpty && (
-				<div className="absolute top-0 left-0 text-[#555] pointer-events-none select-none">
-					{placeholder}
-				</div>
-			)}
 			<style>{`
 				.tiptap-editor-wrapper {
 					position: relative;
