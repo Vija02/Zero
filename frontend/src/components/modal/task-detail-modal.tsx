@@ -1,5 +1,6 @@
 import { usePbMutations } from "@/api/usePbMutations"
 import { usePbOne } from "@/api/usePbQueries"
+import { Calendar } from "@/components/ui/calendar"
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -7,11 +8,16 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover"
 import { Textarea } from "@/components/ui/textarea"
 import useHotkeys from "@reecelucas/react-use-hotkeys"
 import { format } from "date-fns"
 import {
-	Calendar,
+	Calendar as CalendarIcon,
 	CheckCircle2,
 	Circle,
 	MoreHorizontal,
@@ -84,6 +90,15 @@ export function TaskDetailModal({ taskId, onClose }: TaskDetailModalProps) {
 		}
 	}
 
+	const handleDueDateSelect = (date: Date | undefined) => {
+		if (task) {
+			updateTask({
+				id: task.id,
+				due_date: date ? format(date, "yyyy-MM-dd") : "",
+			})
+		}
+	}
+
 	useHotkeys("Escape", () => {
 		onClose()
 	})
@@ -126,7 +141,7 @@ export function TaskDetailModal({ taskId, onClose }: TaskDetailModalProps) {
 			</div>
 		)
 	}
-	
+
 	if (!task) {
 		return (
 			<div
@@ -187,9 +202,26 @@ export function TaskDetailModal({ taskId, onClose }: TaskDetailModalProps) {
 						</span> */}
 					</div>
 					<div className="flex items-center gap-3">
-						<button className="text-xs text-[#999] hover:text-[#e6e6e6]">
-							Due
-						</button>
+						<Popover>
+							<PopoverTrigger className="text-xs text-[#999] hover:text-[#e6e6e6] flex items-center">
+								<CalendarIcon className="w-3 h-3 mr-1" />
+								{task.due_date
+									? `Due: ${format(new Date(task.due_date), "MMM d")}`
+									: "Due"}
+							</PopoverTrigger>
+							<PopoverContent
+								className="w-auto p-0 bg-[#1e1e1e] border-[#333] z-[60] dark"
+								align="end"
+							>
+								<Calendar
+									mode="single"
+									selected={task.due_date ? new Date(task.due_date) : undefined}
+									onSelect={handleDueDateSelect}
+									initialFocus
+									className="bg-[#1e1e1e] text-[#e6e6e6]"
+								/>
+							</PopoverContent>
+						</Popover>
 						<button className="text-xs text-[#999] hover:text-[#e6e6e6]">
 							Add subtasks
 						</button>
@@ -290,7 +322,7 @@ export function TaskDetailModal({ taskId, onClose }: TaskDetailModalProps) {
 
 				{/* Footer */}
 				<div className="flex items-center gap-2 px-4 py-2.5 bg-[#1a1a1a] text-xs text-[#666]">
-					<Calendar className="w-3.5 h-3.5" />
+					<CalendarIcon className="w-3.5 h-3.5" />
 					<span>
 						Created {format(new Date(task.created), "MMM d, hh:mmbbb")}
 					</span>
