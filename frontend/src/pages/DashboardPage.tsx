@@ -5,8 +5,8 @@ import {
 	CalendarDays,
 	ChevronLeft,
 	ChevronRight,
-	Filter,
-	LayoutGrid,
+	// Filter,
+	// LayoutGrid,
 	Menu,
 } from "lucide-react"
 import { useCallback, useMemo, useState } from "react"
@@ -81,15 +81,15 @@ export function DashboardPage() {
 							>
 								<ChevronRight className="w-4 h-4" />
 							</button>
-							<button className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-[#252525] hover:bg-[#333] rounded text-sm text-[#e6e6e6] transition-colors">
+							{/* <button className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-[#252525] hover:bg-[#333] rounded text-sm text-[#e6e6e6] transition-colors">
 								<Filter className="w-3.5 h-3.5" />
 								Filter
-							</button>
+							</button> */}
 						</div>
-						<button className="flex items-center gap-1.5 px-2.5 py-1 bg-[#252525] hover:bg-[#333] rounded text-sm text-[#e6e6e6] transition-colors">
+						{/* <button className="flex items-center gap-1.5 px-2.5 py-1 bg-[#252525] hover:bg-[#333] rounded text-sm text-[#e6e6e6] transition-colors">
 							<LayoutGrid className="w-3.5 h-3.5" />
 							<span className="hidden sm:inline">Board</span>
-						</button>
+						</button> */}
 					</header>
 
 					<div className="flex-1 flex overflow-hidden">

@@ -2,7 +2,7 @@
 
 import { usePocketBase } from "@/api/usePocketBase"
 import {
-	Archive,
+	// Archive,
 	BetweenHorizontalEnd,
 	CalendarSync,
 	ClipboardList,
@@ -13,12 +13,12 @@ import {
 } from "lucide-react"
 import { useNavigate, useLocation } from "react-router-dom"
 import { useSidebarStore } from "@/stores/useSidebarStore"
-import { useBacklogStore } from "@/stores/useBacklogStore"
+// import { useBacklogStore } from "@/stores/useBacklogStore"
 import { toast } from "react-toastify"
 
 export function LeftSidebar() {
 	const { sidebarOpen, toggleSidebar, setSidebarOpen } = useSidebarStore()
-	const { showBacklog, toggleBacklog } = useBacklogStore()
+	// const { showBacklog, toggleBacklog } = useBacklogStore()
 
 	const pb = usePocketBase()
 	const navigate = useNavigate()
@@ -124,7 +124,7 @@ export function LeftSidebar() {
 							Misc.
 						</div>
 						<div className="space-y-0.5 mt-1">
-							<button
+							{/* <button
 								onClick={toggleBacklog}
 								className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors cursor-pointer ${
 									showBacklog
@@ -134,7 +134,7 @@ export function LeftSidebar() {
 							>
 								<Archive className="w-4 h-4" />
 								Backlog
-							</button>
+							</button> */}
 							<button
 								onClick={toggleSyncRefresh}
 								className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors cursor-pointer text-[#888] hover:bg-[#1e1e1e] hover:text-[#e6e6e6]`}
