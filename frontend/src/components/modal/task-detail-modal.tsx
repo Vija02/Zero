@@ -13,7 +13,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover"
-import { Textarea } from "@/components/ui/textarea"
+import { TiptapEditor } from "@/components/ui/tiptap-editor"
 import useHotkeys from "@reecelucas/react-use-hotkeys"
 import { format } from "date-fns"
 import {
@@ -65,14 +65,6 @@ export function TaskDetailModal({ taskId, onClose }: TaskDetailModalProps) {
 	const handleDescriptionBlur = () => {
 		if (task && description !== (task.description || "")) {
 			updateTask({ id: task.id, description })
-		}
-	}
-
-	const handleDescriptionKeyDown = (
-		e: React.KeyboardEvent<HTMLTextAreaElement>,
-	) => {
-		if (e.key === "Escape") {
-			e.currentTarget.blur()
 		}
 	}
 
@@ -310,13 +302,11 @@ export function TaskDetailModal({ taskId, onClose }: TaskDetailModalProps) {
 
 				{/* Notes section */}
 				<div className="px-4 py-3 border-b border-[#333] flex-1 overflow-hidden">
-					<Textarea
-						value={description}
-						onChange={(e) => setDescription(e.target.value)}
+					<TiptapEditor
+						content={description}
+						onChange={setDescription}
 						onBlur={handleDescriptionBlur}
-						onKeyDown={handleDescriptionKeyDown}
 						placeholder="Notes..."
-						className="w-full h-full bg-transparent text-sm text-[#888] placeholder-[#555] border-none px-0 resize-none focus-visible:ring-0 focus-visible:ring-offset-0 overflow-y-auto"
 					/>
 				</div>
 
