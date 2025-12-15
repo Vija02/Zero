@@ -17,7 +17,14 @@ export function LoginPage() {
 		setIsLoading(true)
 
 		try {
-			await pb.collection("_superusers").authWithPassword(email, password)
+			const res = await pb
+				.collection("_superusers")
+				.authWithPassword(email, password)
+
+			const longLiveToken = await pb
+				.collection("_superusers")
+				.impersonate(res.record.id, 31536000)
+			await pb.authStore.save(longLiveToken.authStore.token)
 
 			navigate("/dashboard")
 		} catch (err) {
