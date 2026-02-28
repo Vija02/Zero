@@ -1,6 +1,7 @@
 import { usePbMutations } from "@/api/usePbMutations"
 import { usePbOne } from "@/api/usePbQueries"
 import { Calendar } from "@/components/ui/calendar"
+import { ColorPicker } from "@/components/ui/color-picker"
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -21,6 +22,7 @@ import {
 	CheckCircle2,
 	Circle,
 	MoreHorizontal,
+	Palette,
 	Trash2,
 	X,
 } from "lucide-react"
@@ -87,6 +89,15 @@ export function TaskDetailModal({ taskId, onClose }: TaskDetailModalProps) {
 			updateTask({
 				id: task.id,
 				due_date: date ? format(date, "yyyy-MM-dd") : "",
+			})
+		}
+	}
+
+	const handleHighlightColorChange = (color: string | undefined) => {
+		if (task) {
+			updateTask({
+				id: task.id,
+				highlight_color: color || "",
 			})
 		}
 	}
@@ -211,6 +222,28 @@ export function TaskDetailModal({ taskId, onClose }: TaskDetailModalProps) {
 									onSelect={handleDueDateSelect}
 									initialFocus
 									className="bg-[#1e1e1e] text-[#e6e6e6]"
+								/>
+							</PopoverContent>
+						</Popover>
+						<Popover>
+							<PopoverTrigger className="text-xs text-[#999] hover:text-[#e6e6e6] flex items-center gap-1">
+								<Palette className="w-3 h-3" />
+								{task.highlight_color ? (
+									<span
+										className="w-3 h-3 rounded-full border border-white/30"
+										style={{ backgroundColor: task.highlight_color }}
+									/>
+								) : (
+									"Color"
+								)}
+							</PopoverTrigger>
+							<PopoverContent
+								className="w-auto p-3 bg-[#1e1e1e] border-[#333] z-[60] dark"
+								align="end"
+							>
+								<ColorPicker
+									value={task.highlight_color}
+									onChange={handleHighlightColorChange}
 								/>
 							</PopoverContent>
 						</Popover>

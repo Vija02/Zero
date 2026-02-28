@@ -116,6 +116,7 @@ export type TasksRecord = {
 	due_date?: IsoDateString
 	google_calendar_date?: IsoDateString
 	google_calendar_id?: string
+	highlight_color?: string
 	id: string
 	order?: number
 	title?: string

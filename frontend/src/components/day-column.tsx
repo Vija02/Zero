@@ -334,6 +334,10 @@ function TaskCard({ task, day, index }: TaskCardProps) {
 					? "border-orange-500"
 					: "border-transparent hover:border-[#333]"
 			} ${isDragging ? "opacity-50 scale-95" : ""}`}
+			style={{
+				borderBottomColor: task.highlight_color || undefined,
+				borderBottomWidth: task.highlight_color ? "3px" : undefined,
+			}}
 			onClick={() => openTaskDetail(task.id)}
 		>
 			{/* {task.scheduledTime && (
