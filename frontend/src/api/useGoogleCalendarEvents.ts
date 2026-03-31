@@ -140,10 +140,28 @@ export function useGoogleCalendarEvents(
 					// Transform Google Calendar events to react-big-calendar format
 					const calendarEvents = items.map((event): CalendarEvent => {
 						const isAllDay = !event.start.dateTime
-						const start = new Date(
-							event.start.dateTime || event.start.date || "",
-						)
-						const end = new Date(event.end.dateTime || event.end.date || "")
+
+						let start: Date
+						let end: Date
+
+						if (isAllDay) {
+							// For all-day events, Google returns dates like "2025-03-30"
+							// Parse date parts directly to avoid UTC timezone conversion issues with DST
+							const [startYear, startMonth, startDay] = event.start
+								.date!.split("-")
+								.map(Number)
+							const [endYear, endMonth, endDay] = event.end
+								.date!.split("-")
+								.map(Number)
+
+							// Create dates in local timezone at midnight
+							start = new Date(startYear, startMonth - 1, startDay, 0, 0, 0)
+							// Google's end date is exclusive for all-day events
+							end = new Date(endYear, endMonth - 1, endDay, 0, 0, 0)
+						} else {
+							start = new Date(event.start.dateTime!)
+							end = new Date(event.end.dateTime!)
+						}
 
 						return {
 							id: event.id, // Prefix with calendar ID to ensure uniqueness

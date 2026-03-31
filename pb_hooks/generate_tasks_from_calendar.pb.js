@@ -71,17 +71,41 @@ cronAdd("generate_tasks_from_calendar", "*/30 * * * *", () => {
 			const data = JSON.parse(response.raw)
 			const events = data.items || []
 
-			return events.map((event) => ({
+		return events.map((event) => {
+			const isAllDay = !event.start?.dateTime
+			let start, end
+
+			if (isAllDay && event.start?.date) {
+				// For all-day events, Google returns dates like "2025-03-30"
+				// Parse date parts directly to avoid UTC timezone conversion issues with DST
+				const [startYear, startMonth, startDay] = event.start.date
+					.split("-")
+					.map(Number)
+				const [endYear, endMonth, endDay] = event.end.date.split("-").map(Number)
+
+				// Create dates in local timezone at midnight and convert to ISO string
+				const startDate = new Date(startYear, startMonth - 1, startDay, 0, 0, 0)
+				const endDate = new Date(endYear, endMonth - 1, endDay, 0, 0, 0)
+				start = startDate.toISOString()
+				end = endDate.toISOString()
+			} else {
+				start = event.start?.dateTime
+				end = event.end?.dateTime
+			}
+
+			return {
 				id: event.id,
 				summary: event.summary,
 				description: event.description ?? "",
-				start: event.start?.dateTime || event.start?.date,
-				end: event.end?.dateTime || event.end?.date,
+				start: start,
+				end: end,
 				htmlLink: event.htmlLink,
 				status: event.status,
 				created: event.created,
 				updated: event.updated,
-			}))
+				isAllDay: isAllDay,
+			}
+		})
 		}
 
 		const now = new Date()
