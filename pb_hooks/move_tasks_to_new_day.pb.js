@@ -1,8 +1,11 @@
 // Run every hour
 cronAdd("move_tasks_to_new_day", "0 * * * *", () => {
+	// Use UTC midnight so comparisons match PocketBase's @todayStart macro
+	// (which is UTC). Mixing local midnight here caused today's tasks to compare
+	// as "before today" every cron tick, inflating carry_over.
 	function getStartOfDay(date = new Date()) {
 		const startOfDay = new Date(date)
-		startOfDay.setHours(0, 0, 0, 0)
+		startOfDay.setUTCHours(0, 0, 0, 0)
 		return startOfDay.toISOString()
 	}
 
